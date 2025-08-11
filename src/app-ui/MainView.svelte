@@ -135,6 +135,15 @@
 		{ name: "VU plane (No Effect)", rotation: [{ axis1: 4, axis2: 5 }] },
 	]
 
+	function getAxisName(axis: Vec6) {
+		if (axis.x > 0) return 'X';
+		if (axis.y > 0) return 'Y';
+		if (axis.z > 0) return 'Z';
+		if (axis.w > 0) return 'W';
+		if (axis.v > 0) return 'V';
+		return 'U';
+	}
+
 </script>
 <main class="w-full h-screen bg-background overflow-hidden relative flex">
 	<!-- Canvas container that adjusts to sidebar -->
@@ -196,12 +205,20 @@
 				</div>
 
 				<div class="flex items-center mb-1">
-					Move Camera
+					<div>
+						Move Local {getAxisName(inputMap.scheme.horizontalAxis)}
+					</div>
 
 					{@render kbd("W")}
+					{@render kbd("D")}
+				</div>
+
+				<div class="flex items-center mb-1">
+					<div>
+						Move Local {getAxisName(inputMap.scheme.verticalAxis)}
+					</div>
 					{@render kbd("A")}
 					{@render kbd("S")}
-					{@render kbd("D")}
 				</div>
 
 				<div class="flex items-center mb-1">
