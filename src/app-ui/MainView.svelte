@@ -525,17 +525,23 @@
 		<br>
 
 		{#if mandelbrot instanceof InterpolatedMandelbrotState}
+			{@const degToRad = (n: number) => n * (Math.PI / 180)}
+			{@const radToDeg = (n: number) => n * (180 / Math.PI)}
 			<div class="grid grid-cols-2 gap-2">
 				<NumberField 
 					label="Julia-wise Rotation°" 
-					value={mandelbrotInterpolated.lerpRotation.y}
-					onInput={e => mandelbrotInterpolated.lerpRotation.y = e.value}
+					bind:value={
+						()=>radToDeg(mandelbrotInterpolated.lerpRotation.y),
+						v=>mandelbrotInterpolated.lerpRotation.y = degToRad(v)
+					}
 					className="w-full"
 				/>
 				<NumberField 
 					label="X-wise Rotation°" 
-					value={mandelbrotInterpolated.lerpRotation.x}
-					onInput={e => mandelbrotInterpolated.lerpRotation.x = e.value}
+					bind:value={
+						()=>radToDeg(mandelbrotInterpolated.lerpRotation.x),
+						v=>mandelbrotInterpolated.lerpRotation.x = degToRad(v)
+					}
 					className="w-full"
 				/>
 			</div>
