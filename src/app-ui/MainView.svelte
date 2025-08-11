@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { MandelbrotRenderer } from '../mandelbrot/MandelbrotRenderer.js';
-	import { MandelbrotState } from '../mandelbrot/MandelbrotState.svelte.js';
+	import { IndicatorSetting, Mandelbrot6DState, InterpolatedMandelbrotState } from '../mandelbrot/MandelbrotState.svelte.js';
 	import { inputMap } from '../mandelbrot/inputMap.svelte.js';
 	import NumberField from '../ui-components/NumberField.svelte';
 	import Button from '../ui-components/Button.svelte';
@@ -12,11 +12,19 @@
 	import { juliaWiseInputScheme, mandelbrotToExponentMappings, mandelbrotToJuliaMappings, regularInputScheme, xWiseInputScheme, type InputScheme, type PlaneMapping } from '../mandelbrot/inputSchemes.js';
 	import { deepEquals } from '../utilities/deepEquals.js';
 	import SelectField from '../ui-components/SelectField.svelte';
+	import { presets, type Preset } from '../mandelbrot/orientationPresets.js';
+	import CheckboxField from '../ui-components/CheckboxField.svelte';
+	import { Vec2 } from '../math/Vec2.js';
 	
 	let canvas: HTMLCanvasElement;
 	let renderer: MandelbrotRenderer;
-	let mandelbrot = $state(new MandelbrotState());
+
+	const mandelbrot6D = new Mandelbrot6DState();
+	const mandelbrotInterpolated = new InterpolatedMandelbrotState();
+
+	let mandelbrot = $state(mandelbrot6D) as Mandelbrot6DState | InterpolatedMandelbrotState;
 	let animationFrame: number;
+	let rotateBy = $state(90);
 
 	// Sidebar state
 	let sidebarOpen = $state(true);
@@ -76,18 +84,28 @@
 		.replace(/\}\"/g,'}');
 	}
 
-	const jsonString = $derived(prettyPrintJson({
-		position: mandelbrot.position.toArray(),
-		orientationMatrix: mandelbrot.orientationMatrix.toArray(),
-		zoom: mandelbrot.zoom,
-	}));
+	const jsonString = $derived.by(()=>{
+		// 6D mandelbrot
+		if (mandelbrot instanceof Mandelbrot6DState) return prettyPrintJson({
+			position: mandelbrot.position.toArray(),
+			orientationMatrix: mandelbrot.orientationMatrix.toArray(),
+			zoom: mandelbrot.zoom,
+		});
+
+		// Interpolated mandelbrot
+		return prettyPrintJson({
+			position: mandelbrot.position.toArray(),
+			lerpRotation: mandelbrot.lerpRotation.toArray(),
+			zoom: mandelbrot.zoom,
+		});
+	});
 
 	
 	let jsonError = $state('');
 	
 	function processJsonDump(jsonDump: string) {
 		try {
-			const data = JSON.parse(jsonDump) as Partial<MandelbrotState>;
+			const data = JSON.parse(jsonDump) as Partial<Mandelbrot6DState> | Partial<InterpolatedMandelbrotState>;
 
 			// Validate data structure
 			if (!data.position || !Array.isArray(data.position) || data.position.length !== 6) {
@@ -95,8 +113,20 @@
 			}
 			
 			// Apply data
+			// 6D mandelbrot
+			if ("orientationMatrix" in data) {
+				mandelbrot = mandelbrot6D;
+				mandelbrot.orientationMatrix = Mat6.fromMaybeArray(data.orientationMatrix);
+			}
+
+			// Lerp mandelbrot
+			if ("lerpRotation" in data) {
+				mandelbrot = mandelbrotInterpolated;
+				mandelbrot.lerpRotation = Vec2.fromMaybeArray(data.lerpRotation);
+			}
+
+			// Shared
 			mandelbrot.position = Vec6.fromMaybeArray(data.position);
-			mandelbrot.orientationMatrix = Mat6.fromMaybeArray(data.orientationMatrix);
 			mandelbrot.zoom = data.zoom ?? mandelbrot.zoom;
 
 			mandelbrot.clearVelocities();
@@ -144,6 +174,22 @@
 		return 'U';
 	}
 
+	function loadPreset(preset: Preset) {
+		if ("orientationMatrix" in preset) {
+			mandelbrot = mandelbrot6D;
+			mandelbrot.orientationMatrix = preset.orientationMatrix;
+		}
+
+		if ("lerpRotation" in preset) {
+			mandelbrot = mandelbrotInterpolated;
+			mandelbrot.lerpRotation = preset.lerpRotation;
+		}
+
+		mandelbrot.position = preset.position;
+		mandelbrot.zoom = preset.zoom;
+		mandelbrot.clearVelocities();
+	}
+
 </script>
 <main class="w-full h-screen bg-background overflow-hidden relative flex">
 	<!-- Canvas container that adjusts to sidebar -->
@@ -173,183 +219,321 @@
 	</div>
 	
 	<!-- Collapsible sidebar -->
-	<div class="absolute top-0 left-0 h-full bg-surface p-4 transition-transform duration-300 overflow-y-auto
+	<div class="absolute top-0 left-0 h-full bg-surface transition-transform duration-300 overflow-y-auto
 		{sidebarOpen ? 'translate-x-0' : '-translate-x-full'}"
 		style="width: {sidebarWidth}px;"
 	>
-		<!-- Input Scheme -->
-		<div class="mb-6">
-			<h3 class="text-lg font-semibold mb-2">Input Scheme</h3>
-			
-			<div class="grid grid-cols-3 gap-2 text-sm mb-4">
-				{#each [regularInputScheme, juliaWiseInputScheme, xWiseInputScheme] as type}
-					<Button 
-						onPress={() => inputMap.scheme = type}
-						className="w-full p-2! rounded! "
-						variant={deepEquals(inputMap.scheme, type) ? 'filled' : 'outlined'}
-					>
-						{getInputSchemeName(type)}
-					</Button>
-				{/each}
-			</div>
-
-			{#snippet kbd(text: string)}
-				<kbd class="
-					bg-surfaceContainer text-onSurfaceContainer rounded px-3 ml-1 font-mono
-				">{text}</kbd>
-			{/snippet}
-
-			<div class="text-sm mb-3">
-				<div class="flex items-center mb-1">
-					Press {@render kbd("1")}, {@render kbd("2")}, or {@render kbd("3")} to switch modes
-				</div>
-
-				<div class="flex items-center mb-1">
-					<div>
-						Move Local {getAxisName(inputMap.scheme.horizontalAxis)}
-					</div>
-
-					{@render kbd("W")}
-					{@render kbd("D")}
-				</div>
-
-				<div class="flex items-center mb-1">
-					<div>
-						Move Local {getAxisName(inputMap.scheme.verticalAxis)}
-					</div>
-					{@render kbd("A")}
-					{@render kbd("S")}
-				</div>
-
-				<div class="flex items-center mb-1">
-					{inputMap.scheme.zoomSpeed ? "Zoom In / Out" : "Rotate"}
-
-					{@render kbd("Space")}
-					{@render kbd("Shift")}
-				</div>
-			</div>
-
-			<div class="text-sm mb-3 font-mono bg-surfaceContainer p-2 rounded">
-				z = (p.z, p.w) <span class="opacity-30">// Julia</span><br>
-				c = (p.x, p.y) <span class="opacity-30">// Classic Mandelbrot</span><br>
-				e = (p.v, p.u) <span class="opacity-30">// X</span>
-			</div>
-
-			<div class="text-sm mb-3 font-mono bg-surfaceContainer p-2 rounded">
-				z = z ^ e + c
-			</div>
-
-		</div>
-
-		<!-- Controls -->
-		<div class="mb-6">
-			<h3 class="text-lg font-semibold mb-2">Controls</h3>
-			<div class="grid grid-cols-2 gap-2">
-				<NumberField 
-					label="Speed"
-					bind:value={mandelbrot.speedScale}
-				/>
-				<NumberField 
-					label="Spring"
-					bind:value={mandelbrot.springScale}
-				/>
-				<div class="col-span-2">
-					<SelectField
-						label="Rotational Plane"
-						value={inputMap.scheme.rotationPlanes}
-						options={rotations.map(r => ({ value: r.rotation, label: r.name }))}
-						onChange={e => {
-							inputMap.scheme.rotationPlanes = e.value;
-							inputMap.scheme.zoomSpeed = e.value.length == 0 ? regularInputScheme.zoomSpeed : 0;
-							console.log(inputMap.scheme.rotationPlanes, inputMap.scheme.zoomSpeed);
-						}}
-					/>
-				</div>
+		<!-- Tabs -->
+		<div>
+			<div class="grid grid-cols-2">
+				<Button 
+					onPress={() => mandelbrot = mandelbrot6D}
+					className="w-full p-2! rounded-none! border-t-0 border-l-0 border-r-0"
+					variant={mandelbrot instanceof Mandelbrot6DState ? 'filled' : 'outlined'}
+				>
+					6D Mandelbrot
+				</Button>
+				<Button 
+					onPress={() => mandelbrot = mandelbrotInterpolated}
+					className="w-full p-2! rounded-none! border-t-0 border-l-0 border-r-0"
+					variant={mandelbrot instanceof InterpolatedMandelbrotState ? 'filled' : 'outlined'}
+				>
+					Interpolated
+				</Button>
 			</div>
 		</div>
 
-		<!-- Indicators -->
-		<div class="mb-6">
-			<h3 class="text-lg font-semibold mb-2">Indicators</h3>
-			<div class="grid grid-cols-2 gap-2">
-				<NumberField 
-					label="Z Indicator Size"
-					bind:value={mandelbrot.zIndicatorSize}
-				/>
-				<NumberField 
-					label="E Indicator Size"
-					bind:value={mandelbrot.eIndicatorSize}
-				/>
+		<div class="p-4">
+			<div class="text-sm opacity-80">
+				{#if mandelbrot instanceof Mandelbrot6DState}
+					The 6D Mandelbrot uses true 6D rotation.
+				{:else}
+					The Interpolated Mandelbrot uses 3D rotation to interpolate the `z`, `c`, and `e` components.
+				{/if}
 			</div>
-			<small class="text-xs opacity-80 ml-2">
-				Set to 0 to disable.
-			</small>
+
+			<div class="mb-4"></div>
+
+			<!-- Preset -->
+			<!--<div class="mb-6">
+				<SelectField
+					label="Load Preset"
+					value={presets[0]!}
+					options={presets.map(p => ({ value: p, label: p.name }))}
+					onChange={e => loadPreset(e.value)}
+				/>
+			</div>-->
+
+			{@render sidebarMain()}
+		</div>
+	</div>
+</main>
+
+{#snippet sidebarMain()}
+	<!-- Input Scheme -->
+	<div class="mb-6">
+		<h3 class="text-lg font-semibold mb-2">Input Scheme</h3>
+		
+		<div class="grid grid-cols-3 gap-2 text-sm mb-4">
+			{#each [regularInputScheme, juliaWiseInputScheme, xWiseInputScheme] as type}
+				<Button 
+					onPress={() => inputMap.scheme = type}
+					className="w-full p-2! rounded! "
+					variant={deepEquals(inputMap.scheme, type) ? 'filled' : 'outlined'}
+				>
+					{getInputSchemeName(type)}
+				</Button>
+			{/each}
 		</div>
 
+		{#snippet kbd(text: string)}
+			<kbd class="
+				bg-surfaceContainer text-onSurfaceContainer rounded px-3 ml-1 font-mono
+			">{text}</kbd>
+		{/snippet}
 
-		<!-- Display Right/Up vectors -->
-		<div class="mb-6">
-			<h3 class="text-lg font-semibold mb-2">Camera</h3>
-			{#snippet vector(options: { vector: Vec6, readonly: boolean})}
-				<div class="grid grid-cols-2 gap-2">
-					<NumberField
-						label="X"
-						hideLabel={true}
-						readonly={options.readonly}
-						value={options.vector.x}
-						onInput={e => options.vector.x = e.value}
-					/>
-					<NumberField
-						label="Y"
-						hideLabel={true}
-						readonly={options.readonly}
-						value={options.vector.y}
-						onInput={e => options.vector.y = e.value}
-					/>
-					<NumberField
-						label="Z"
-						hideLabel={true}
-						readonly={options.readonly}
-						value={options.vector.z}
-						onInput={e => options.vector.z = e.value}
-					/>
-					<NumberField
-						label="W"
-						hideLabel={true}
-						readonly={options.readonly}
-						value={options.vector.w}
-						onInput={e => options.vector.w = e.value}
-					/>
-					<NumberField
-						label="V"
-						hideLabel={true}
-						readonly={options.readonly}
-						value={options.vector.v}
-						onInput={e => options.vector.v = e.value}
-					/>
-					<NumberField
-						label="U"
-						hideLabel={true}
-						readonly={options.readonly}
-						value={options.vector.u}
-						onInput={e => options.vector.u = e.value}
-					/>
+		<div class="text-sm mb-3">
+			<div class="flex items-center mb-1">
+				Press {@render kbd("1")}, {@render kbd("2")}, or {@render kbd("3")} to switch modes
+			</div>
+
+			<div class="flex items-center mb-1">
+				<div>
+					Move {mandelbrot.moveOnLocalAxes ? "Local" : ""}{getAxisName(inputMap.scheme.horizontalAxis)}
 				</div>
-			{/snippet}
 
-			<h4 class="font-semibold mb-2">Position</h4>
-			{@render vector({ vector: mandelbrot.position, readonly: false })}
-			<br>
+				{@render kbd("W")}
+				{@render kbd("D")}
+			</div>
 
-			<h4 class="font-semibold mb-2">Zoom</h4>
+			<div class="flex items-center mb-1">
+				<div>
+					Move {mandelbrot.moveOnLocalAxes ? "Local" : ""}{getAxisName(inputMap.scheme.verticalAxis)}
+				</div>
+				{@render kbd("A")}
+				{@render kbd("S")}
+			</div>
+
+			<div class="flex items-center mb-1">
+				{inputMap.scheme.zoomSpeed ? "Zoom In / Out" : "Rotate"}
+
+				{@render kbd("Space")}
+				{@render kbd("Shift")}
+			</div>
+		</div>
+
+		<div class="text-sm mb-3 font-mono bg-surfaceContainer p-2 rounded">
+			z = (p.z, p.w) <span class="opacity-30">// Julia</span><br>
+			c = (p.x, p.y) <span class="opacity-30">// Classic Mandelbrot</span><br>
+			e = (p.v, p.u) <span class="opacity-30">// X</span>
+		</div>
+
+		<div class="text-sm mb-3 font-mono bg-surfaceContainer p-2 rounded">
+			z = z ^ e + c
+		</div>
+	</div>
+
+	<!-- Interpolation -->
+	<div class="mb-6">
+		{#if mandelbrot instanceof InterpolatedMandelbrotState}
+			<div class="grid grid-cols-3 gap-2 text-sm">
+				<div class="p-2 rounded border border-containerBorder">
+					<div class="font-medium text-center">Z</div>
+					<div class="text-center">{mandelbrot.lerp.x.toFixed(3)}</div>
+				</div>
+				<div class="p-2 rounded border border-containerBorder">
+					<div class="font-medium text-center">C</div>
+					<div class="text-center">{mandelbrot.lerp.y.toFixed(3)}</div>
+				</div>
+				<div class="p-2 rounded border border-containerBorder">
+					<div class="font-medium text-center">E</div>
+					<div class="text-center">{mandelbrot.lerp.z.toFixed(3)}</div>
+				</div>
+			</div>
+		{/if}
+	</div>
+
+
+	<!-- Render settings -->
+	<div class="mb-6">
+		<h3 class="text-lg font-semibold mb-2">Indicators</h3>
+		<div class="grid grid-cols-2 gap-2 mb-2">
 			<NumberField 
-				label="Zoom" 
-				bind:value={mandelbrot.zoom} 
-				hideLabel={true}
-				className="w-full"
+				label="Z Indicator Size"
+				bind:value={mandelbrot.zIndicatorSize}
 			/>
-			<br>
+			<NumberField 
+				label="E Indicator Size"
+				bind:value={mandelbrot.eIndicatorSize}
+			/>
+		</div>
+		<SelectField 
+			label="Show Indicator"
+			className="mb-2"
+			bind:value={
+				()=>mandelbrot.zIndicatorSetting,
+				(value)=> {
+					mandelbrot.zIndicatorSetting = value;
+					mandelbrot.eIndicatorSetting = value;
+				}
+			}
+			options={[
+				{ value: IndicatorSetting.Never, label: "Never" },
+				{ value: IndicatorSetting.Always, label: "Always" },
+				{ value: IndicatorSetting.WhenToolSelected, label: "When Tool Selected" },
+			]}
+		/>
+	</div>
 
+	<!-- Controls -->
+	<div class="mb-6">
+		<h3 class="text-lg font-semibold mb-2">Controls</h3>
+		<div class="grid grid-cols-2 gap-2">
+			<NumberField 
+				label="Speed"
+				bind:value={mandelbrot.speedScale}
+			/>
+			<NumberField 
+				label="Spring"
+				bind:value={mandelbrot.springScale}
+			/>
+
+			<div class="col-span-2" hidden={mandelbrot instanceof InterpolatedMandelbrotState}>
+				<SelectField
+					label="Rotational Plane"
+					value={inputMap.scheme.rotationPlanes}
+					options={rotations.map(r => ({ value: r.rotation, label: r.name }))}
+					onChange={e => {
+						inputMap.scheme.rotationPlanes = e.value;
+						inputMap.scheme.zoomSpeed = e.value.length == 0 ? regularInputScheme.zoomSpeed : 0;
+						console.log(inputMap.scheme.rotationPlanes, inputMap.scheme.zoomSpeed);
+					}}
+				/>
+			</div>
+
+			{#if mandelbrot instanceof Mandelbrot6DState}
+				<div class="col-span-2 grid grid-cols-[1fr_min-content] gap-2 items-end">
+					<NumberField 
+						label="Rotate By"
+						bind:value={rotateBy}
+					/>
+					<Button
+						className="w-20 p-2! rounded!"
+						disabled={inputMap.scheme.rotationPlanes.length === 0}
+						onPress={() => {
+							const inRadians = rotateBy * (Math.PI / 180);
+							mandelbrot.rotateByPlaneMappings(inputMap.scheme.rotationPlanes, inRadians)
+						}}
+					>
+						Rotate
+					</Button>
+				</div>
+
+				<div class="col-span-2">
+					<CheckboxField
+						label="Move on Local Axes"
+						bind:checked={mandelbrot.moveOnLocalAxes}
+					/>
+					<CheckboxField
+						label="Rotate on Local Axes"
+						bind:checked={mandelbrot.rotateOnLocalAxes}
+					/>
+				</div>
+			{/if}
+		</div>
+	</div>
+
+
+	<!-- Camera -->
+	<div class="mb-6">
+		<h3 class="text-lg font-semibold mb-2">Camera</h3>
+		{#snippet vector(options: { vector: Vec6, readonly: boolean})}
+			<div class="grid grid-cols-2 gap-2">
+				<NumberField
+					label="X"
+					hideLabel={true}
+					readonly={options.readonly}
+					value={options.vector.x}
+					onInput={e => options.vector.x = e.value}
+				/>
+				<NumberField
+					label="Y"
+					hideLabel={true}
+					readonly={options.readonly}
+					value={options.vector.y}
+					onInput={e => options.vector.y = e.value}
+				/>
+				<NumberField
+					label="Z"
+					hideLabel={true}
+					readonly={options.readonly}
+					value={options.vector.z}
+					onInput={e => options.vector.z = e.value}
+				/>
+				<NumberField
+					label="W"
+					hideLabel={true}
+					readonly={options.readonly}
+					value={options.vector.w}
+					onInput={e => options.vector.w = e.value}
+				/>
+				<NumberField
+					label="V"
+					hideLabel={true}
+					readonly={options.readonly}
+					value={options.vector.v}
+					onInput={e => options.vector.v = e.value}
+				/>
+				<NumberField
+					label="U"
+					hideLabel={true}
+					readonly={options.readonly}
+					value={options.vector.u}
+					onInput={e => options.vector.u = e.value}
+				/>
+			</div>
+		{/snippet}
+
+		<h4 class="font-semibold mb-2">Position</h4>
+		{@render vector({ vector: mandelbrot.position, readonly: false })}
+		<br>
+
+		<h4 class="font-semibold mb-2">Zoom</h4>
+		<NumberField 
+			label="Zoom" 
+			bind:value={mandelbrot.zoom} 
+			hideLabel={true}
+			className="w-full"
+		/>
+		<br>
+
+		<Button
+			className="px-5! p-2! rounded! mt-2"
+			onPress={() => {
+				mandelbrot6D.orientationMatrix = Mat6.identity();
+			}}
+		>
+			Reset Rotation
+		</Button>
+		<br>
+		<br>
+
+		{#if mandelbrot instanceof InterpolatedMandelbrotState}
+			<div class="grid grid-cols-2 gap-2">
+				<NumberField 
+					label="Julia-wise Rotation°" 
+					bind:value={mandelbrot.lerpRotation.y} 
+					className="w-full"
+				/>
+				<NumberField 
+					label="X-wise Rotation°" 
+					bind:value={mandelbrot.lerpRotation.x}
+					className="w-full"
+				/>
+			</div>
+		{/if}
+		
+		{#if mandelbrot instanceof Mandelbrot6DState}
 			<h4 class="font-semibold mb-2">
 				Right Vector 
 				<small class="text-xs opacity-80">(Read Only)</small>
@@ -362,35 +546,35 @@
 				<small class="text-xs opacity-80">(Read Only)</small>
 			</h4>
 			{@render vector({ vector: mandelbrot.upVector, readonly: true })}
-		</div>
-
-		<!-- JSON Dump -->
-		<div class="mb-6">
-			<h3 class="text-lg font-semibold mb-2">JSON Dump</h3>
-			<small class="text-xs opacity-80 text-balance">
-				Copy this JSON to save the current state, or paste it to load a state.
-			</small>
-			<div class="mb-2"></div>
-			<textarea
-				id="json-dump"
-				value={jsonString}
-				oninput={function() {
-					processJsonDump(this.value as string);
-				}}
-				placeholder="Paste JSON parameters here..."
-				class="
-					w-full p-3 font-mono whitespace-pre resize-none
-					border-[.08rem] border-containerBorder rounded-md bg-transparent
-					focus-visible:outline-[3px] outline-primary-500 outline-offset-[-3px]
-				"
-				rows={jsonString.split('\n').length + 1}
-			></textarea>
-
-			{#if jsonError}
-				<div class="text-red-500 text-sm mt-2">
-					Error: {jsonError}
-				</div>
-			{/if}
-		</div>
+		{/if}
 	</div>
-</main>
+
+	<!-- JSON Dump -->
+	<div class="mb-6">
+		<h3 class="text-lg font-semibold mb-2">JSON Dump</h3>
+		<small class="text-xs opacity-80 text-balance">
+			Copy this JSON to save the current state, or paste it to load a state.
+		</small>
+		<div class="mb-2"></div>
+		<textarea
+			id="json-dump"
+			value={jsonString}
+			oninput={function() {
+				processJsonDump(this.value as string);
+			}}
+			placeholder="Paste JSON parameters here..."
+			class="
+				w-full p-3 font-mono whitespace-pre resize-none
+				border-[.08rem] border-containerBorder rounded-md bg-transparent
+				focus-visible:outline-[3px] outline-primary-500 outline-offset-[-3px]
+			"
+			rows={jsonString.split('\n').length + 1}
+		></textarea>
+
+		{#if jsonError}
+			<div class="text-red-500 text-sm mt-2">
+				Error: {jsonError}
+			</div>
+		{/if}
+	</div>
+{/snippet}

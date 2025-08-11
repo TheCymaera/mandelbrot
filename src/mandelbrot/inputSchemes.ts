@@ -26,10 +26,20 @@ export const mandelbrotToExponentMappings: PlaneMapping[] = [
 	{ axis1: 1, axis2: 5 },
 ]
 
-//export const juliaToExponentMappings: PlaneMapping[] = [
-//	{ axis1: 2, axis2: 4 },
-//	{ axis1: 3, axis2: 5 },
-//]
+export const juliaToMandelbrotMappings: PlaneMapping[] = [
+	{ axis1: 2, axis2: 0 },
+	{ axis1: 3, axis2: 1 },
+]
+
+export const exponentToMandelbrotMapping: PlaneMapping[] = [
+	{ axis1: 4, axis2: 0 },
+	{ axis1: 5, axis2: 1 },
+]
+
+export const juliaToExponentMappings: PlaneMapping[] = [
+	{ axis1: 2, axis2: 4 },
+	{ axis1: 3, axis2: 5 },
+]
 
 export const regularInputScheme: InputScheme = {
 	horizontalAxis: new Vec6(1, 0, 0, 0, 0, 0).scale(.8),

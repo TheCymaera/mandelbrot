@@ -29,7 +29,7 @@
 	<div class="relative">
 		<select 
 			class="
-				flex-1 w-full p-3 !pr-6 border-[.08rem] border-containerBorder rounded-md bg-transparent
+				flex-1 w-full px-3 p-2 !pr-6 border-[.08rem] border-containerBorder rounded-md bg-transparent
 				focus-visible:outline-[3px] outline-primary-500 outline-offset-[-3px]
 				disabled:opacity-50
 				appearance-none

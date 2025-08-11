@@ -85,4 +85,23 @@ export class Vec6 {
 			this.u - other.u
 		);
 	}
+
+	static readonly X_INDEX = 0;
+	static readonly Y_INDEX = 1;
+	static readonly Z_INDEX = 2;
+	static readonly W_INDEX = 3;
+	static readonly V_INDEX = 4;
+	static readonly U_INDEX = 5;
+
+	static fromIndex(index: number): Vec6 {
+		switch (index) {
+			case Vec6.X_INDEX: return new Vec6(1, 0, 0, 0, 0, 0);
+			case Vec6.Y_INDEX: return new Vec6(0, 1, 0, 0, 0, 0);
+			case Vec6.Z_INDEX: return new Vec6(0, 0, 1, 0, 0, 0);
+			case Vec6.W_INDEX: return new Vec6(0, 0, 0, 1, 0, 0);
+			case Vec6.V_INDEX: return new Vec6(0, 0, 0, 0, 1, 0);
+			case Vec6.U_INDEX: return new Vec6(0, 0, 0, 0, 0, 1);
+			default: throw new Error('Invalid index');
+		}
+	}
 }

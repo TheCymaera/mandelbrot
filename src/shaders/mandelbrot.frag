@@ -13,6 +13,7 @@ uniform Vec6 u_upVector;
 uniform Vec6 u_rightVector;
 uniform float u_zIndicatorSize;
 uniform float u_eIndicatorSize;
+uniform vec3 u_interpolation;
 
 // ==================================
 
@@ -64,7 +65,7 @@ bool renderIndicator(vec2 z, vec2 c, float indicatorSize, vec4 color) {
 	if (indicatorSize <= 0.0) return false;
 	
 	float distance = length(z - c);
-	float threshold = indicatorSize / u_zoom;
+	float threshold = indicatorSize;
 	
 	if (distance < threshold) {
 		fragColor = color;
@@ -87,9 +88,13 @@ void main() {
 	Vec6 pixelPosition = add(u_position, scale(offset, 1.0 / u_zoom));
 	
 	// Extract z, c, and e
-	vec2 z = vec2(pixelPosition.z, pixelPosition.w);
-	vec2 c = vec2(pixelPosition.x, pixelPosition.y);
-	vec2 e = vec2(pixelPosition.v, pixelPosition.u);
+	vec2 zb = vec2(pixelPosition.z, pixelPosition.w);
+	vec2 cb = vec2(pixelPosition.x, pixelPosition.y);
+	vec2 eb = vec2(pixelPosition.v, pixelPosition.u);
+
+	vec2 z = mix(zb, cb, u_interpolation.x);
+	vec2 c = mix(zb, cb, u_interpolation.y);
+	vec2 e = mix(eb, cb, u_interpolation.z);
 
 	// Render indicators
 	vec4 CYAN = vec4(0.0, 1.0, 1.0, 1.0);

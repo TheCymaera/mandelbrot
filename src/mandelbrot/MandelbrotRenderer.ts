@@ -1,4 +1,4 @@
-import { MandelbrotState } from './MandelbrotState.svelte.js';
+import { Mandelbrot6DState, InterpolatedMandelbrotState } from './MandelbrotState.svelte.js';
 import vertexShader from '../shaders/screenQuad.vert?raw';
 import fragmentShader from '../shaders/mandelbrot.frag?raw';
 import vec6Shader from '../shaders/vec6.frag?raw';
@@ -45,7 +45,7 @@ export class MandelbrotRenderer {
 		this.gl.viewport(0, 0, width, height);
 	}
 	
-	render(state: MandelbrotState): void {
+	render(state: Mandelbrot6DState | InterpolatedMandelbrotState): void {
 		// Clear
 		this.gl.clearColor(0, 0, 0, 1);
 		this.gl.clear(this.gl.COLOR_BUFFER_BIT);
@@ -60,15 +60,21 @@ export class MandelbrotRenderer {
 		};
 
 		// Set uniforms
+		const interpolation = state instanceof Mandelbrot6DState ?
+			InterpolatedMandelbrotState.MANDELBROT_INTERPOLATION :
+			state.lerp;
+
 		setVec6(this.uniforms.u_position, state.position);
 		setVec6(this.uniforms.u_upVector, state.upVector);
 		setVec6(this.uniforms.u_rightVector, state.rightVector);
 
-		this.gl.uniform1f(this.uniforms.u_zIndicatorSize, state.zIndicatorSize);
-		this.gl.uniform1f(this.uniforms.u_eIndicatorSize, state.eIndicatorSize);
+		this.gl.uniform1f(this.uniforms.u_zIndicatorSize, state.zIndicatorEffectiveSize);
+		this.gl.uniform1f(this.uniforms.u_eIndicatorSize, state.eIndicatorEffectiveSize);
 		this.gl.uniform1f(this.uniforms.u_zoom, state.zoomLevel);
 		this.gl.uniform2f(this.uniforms.u_screenSize, this.canvas.width, this.canvas.height);
-		
+
+		this.gl.uniform3f(this.uniforms.u_interpolation, interpolation.x, interpolation.y, interpolation.z);
+
 		// Draw
 		this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
 	}
@@ -105,6 +111,7 @@ export class MandelbrotRenderer {
 			u_eIndicatorSize: requireUniform(gl, program, 'u_eIndicatorSize'),
 			u_zoom: requireUniform(gl, program, 'u_zoom'),
 			u_screenSize: requireUniform(gl, program, 'u_screenSize'),
+			u_interpolation: requireUniform(gl, program, 'u_interpolation'),
 		} as const;
 	}
 }
@@ -117,7 +124,7 @@ function createShader(gl: WebGL2RenderingContext, type: number, source: string):
 	gl.compileShader(shader);
 
 	if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-		gl.deleteShader(shader);
+		//gl.deleteShader(shader);
 		throw new Error('Shader compilation error: ' + gl.getShaderInfoLog(shader));
 	}
 	

@@ -1,24 +1,30 @@
-import { Vec3 } from '../math/Vector.js';
+import { Vec2 } from '../math/Vec2.js';
 import { Vec6 } from '../math/Vec6.js';
 import { Mat6 } from '../math/Mat6.js';
 import { inputMap } from './inputMap.svelte.js';
-import type { PlaneMapping } from './inputSchemes.js';
+import { juliaWiseInputScheme, mandelbrotToExponentMappings, mandelbrotToJuliaMappings, type InputScheme, type PlaneMapping } from './inputSchemes.js';
+import { mandelbrotPreset } from './orientationPresets.js';
+import { expLerpFactor, lerp } from '../math/utilities.js';
+import { Vec3 } from '../math/Vec3.js';
 
-/**
- * State update logic ported from update.fsh
- */
-export class MandelbrotState {
+export enum IndicatorSetting {
+	Always,
+	Never,
+	WhenToolSelected,
+}
+
+export class Mandelbrot6DState {
 	static readonly RIGHT_VECTOR = new Vec6(1, 0, 0, 0, 0, 0);
 	static readonly UP_VECTOR = new Vec6(0, 1, 0, 0, 0, 0);
 
-	position = $state(new Vec6(0, 0, 0, 0, 2, 0));
+	position = $state(mandelbrotPreset.position);
 	velocity = new Vec6(0, 0, 0, 0, 0, 0);
 	
-	upVector = $state(new Vec6(0, 1, 0, 0, 0, 0));
-	rightVector = $state(new Vec6(1, 0, 0, 0, 0, 0));
-	zoomLevel = $state(1.0);
+	upVector = $state(Mandelbrot6DState.UP_VECTOR);
+	rightVector = $state(Mandelbrot6DState.RIGHT_VECTOR);
+	zoomLevel = $state(0);
 
-	zoom = $state(-2.0);
+	zoom = $state(mandelbrotPreset.zoom);
 	zoomVelocity = $state(0);
 	rotationVelocity = $state(0);
 
@@ -26,45 +32,44 @@ export class MandelbrotState {
 	zIndicatorSize = $state(0.0025);
 	eIndicatorSize = $state(0.0025);
 
+	zIndicatorSetting = $state(IndicatorSetting.Always);
+	eIndicatorSetting = $state(IndicatorSetting.Always);
+
 	speedScale = $state(1.0);
 	springScale = $state(1.0);
 
-	orientationMatrix = new Mat6();
-	
+	orientationMatrix = Mat6.identity().set(mandelbrotPreset.orientationMatrix);
+
+	moveOnLocalAxes = $state(true);
+	rotateOnLocalAxes = $state(true);
+
 	private lastTime = 0;
-	
-	/**
-	 * Calculates a frame-rate independent lerp
-	 */
-	private expLerp(lerpAmount: number, deltaTime: number): number {
-		return 1 - Math.exp(-lerpAmount * deltaTime);
+
+	get zIndicatorEffectiveSize() {
+		return this.indicatorEffectiveSize(this.zIndicatorSize, this.zIndicatorSetting, juliaWiseInputScheme);
 	}
 
-	/**
-	 * Adjust exp-lerp based on user settings
-	 */
-	private applySpringSettings(value: number): number {
-		const scale = this.springScale;
-		if (!isFinite(scale)) return 0;
-		return value ** scale;
-	}
-
-	/**
-	 * Mix two numbers
-	 */
-	private mix(a: number, b: number, lerp: number): number {
-		return a + (b - a) * lerp;
+	get eIndicatorEffectiveSize() {
+		return this.indicatorEffectiveSize(this.eIndicatorSize, this.eIndicatorSetting, juliaWiseInputScheme);
 	}
 
 	/**
 	 * Rotate the camera by the specified plane mappings and amount.
 	 */
-	rotateByPlaneMappings(mappings: PlaneMapping[], amount: number) {
-		if (!amount) return;
+	rotateByPlaneMappings(mappings: PlaneMapping[], amount: number, local = false) {
+		if (!amount || mappings.length === 0) return;
+
+		// 6D rotation
 		for (const mapping of mappings) {
 			const { axis1, axis2 } = mapping;
-			const rotationMatrix = Mat6.createPlaneRotation(axis1, axis2, amount);
-			this.orientationMatrix = this.orientationMatrix.multiply(rotationMatrix);
+			const rotationMatrix = !local ?
+				Mat6.rotationFromAxisIndices(axis1, axis2, amount) :
+				Mat6.rotationFromAxes(
+					this.orientationMatrix.multiplyVec6(Vec6.fromIndex(axis1)),
+					this.orientationMatrix.multiplyVec6(Vec6.fromIndex(axis2)),
+					amount
+				)
+			this.orientationMatrix = rotationMatrix.multiply(this.orientationMatrix);
 		}
 	}
 
@@ -76,10 +81,9 @@ export class MandelbrotState {
 		const deltaTime = (this.lastTime === 0 ? 0 : (currentTime - this.lastTime) / 1000);
 		this.lastTime = currentTime;
 		
-		if (deltaTime === 0) return;
-		
 		// Process input
-		let moveDirection = new Vec3(0, 0, 0);
+		let moveDirection = new Vec2(0, 0);
+		let secondaryMovement = 0;
 		
 		if (inputMap.isMovingLeft) moveDirection.x -= 1.0;
 		if (inputMap.isMovingRight) moveDirection.x += 1.0;
@@ -87,8 +91,8 @@ export class MandelbrotState {
 		if (inputMap.isMovingUp) moveDirection.y += 1.0;
 		if (inputMap.isMovingDown) moveDirection.y -= 1.0;
 		
-		if (inputMap.isSneaking) moveDirection.z += 1.0;
-		if (inputMap.isJumping) moveDirection.z -= 1.0;
+		if (inputMap.isSneaking) secondaryMovement += 1.0;
+		if (inputMap.isJumping) secondaryMovement -= 1.0;
 		
 		// Normalize movement direction
 		if (moveDirection.length() > 0.0) {
@@ -97,23 +101,193 @@ export class MandelbrotState {
 		
 		// Calculate target velocity
 		const inputScheme = inputMap.scheme;
-		const horizontalAxis = this.orientationMatrix.multiplyVec6(inputScheme.horizontalAxis);
-		const verticalAxis = this.orientationMatrix.multiplyVec6(inputScheme.verticalAxis);
+		const horizontalAxis = this.moveOnLocalAxes ? 
+			this.orientationMatrix.multiplyVec6(inputScheme.horizontalAxis) : 
+			inputScheme.horizontalAxis;
+		
+		const verticalAxis = this.moveOnLocalAxes ? 
+			this.orientationMatrix.multiplyVec6(inputScheme.verticalAxis) : 
+			inputScheme.verticalAxis;
 
 		const targetVelocity =
 			horizontalAxis.scale(moveDirection.x)
 			.add(verticalAxis.scale(moveDirection.y))
 			.scale(this.speedScale);
 
-		const targetZoomVelocity = moveDirection.z * inputScheme.zoomSpeed * this.speedScale;
-		const targetRotationVelocity = moveDirection.z * inputScheme.rotateSpeed * this.speedScale;
+		const targetZoomVelocity = secondaryMovement * inputScheme.zoomSpeed * this.speedScale;
+		const targetRotationVelocity = secondaryMovement * inputScheme.rotateSpeed * this.speedScale;
 
 		// Accelerate towards target velocity
-		const velocityLerp = this.expLerp(this.applySpringSettings(inputScheme.velocityLerp), deltaTime);
-		const rotationVelocityLerp = this.expLerp(this.applySpringSettings(inputScheme.rotationVelocityLerp), deltaTime);
+		const velocityLerp = expLerpFactor(this.applySpringSettings(inputScheme.velocityLerp), deltaTime);
+		const rotationVelocityLerp = expLerpFactor(this.applySpringSettings(inputScheme.rotationVelocityLerp), deltaTime);
 		this.velocity = this.velocity.mix(targetVelocity, velocityLerp);
-		this.zoomVelocity = this.mix(this.zoomVelocity, targetZoomVelocity, velocityLerp);
-		this.rotationVelocity = this.mix(this.rotationVelocity, targetRotationVelocity, rotationVelocityLerp);
+		this.zoomVelocity = lerp(this.zoomVelocity, targetZoomVelocity, velocityLerp);
+		this.rotationVelocity = lerp(this.rotationVelocity, targetRotationVelocity, rotationVelocityLerp);
+
+		// Apply velocity
+		this.zoom += this.zoomVelocity * deltaTime;
+		this.zoomLevel = Math.pow(2, this.zoom);
+
+		const scaledVelocity = this.velocity.scale(deltaTime);
+		this.position = new Vec6(
+			this.position.x + scaledVelocity.x / this.zoomLevel,
+			this.position.y + scaledVelocity.y / this.zoomLevel,
+			this.position.z + scaledVelocity.z,
+			this.position.w + scaledVelocity.w,
+			this.position.v + scaledVelocity.v,
+			this.position.u + scaledVelocity.u
+		);
+
+		this.rotateByPlaneMappings(inputScheme.rotationPlanes, this.rotationVelocity * deltaTime, this.rotateOnLocalAxes);
+
+		// Zero velocities if small to prevent constant UI updates
+		const margin = 0.02;
+		if (this.velocity.length() < margin) {
+			this.velocity = new Vec6(0, 0, 0, 0, 0, 0);
+		}
+		if (Math.abs(this.zoomVelocity) < margin) {
+			this.zoomVelocity = 0;
+		}
+		if (Math.abs(this.rotationVelocity) < margin) {
+			this.rotationVelocity = 0;
+		}
+
+		// Update the right / up vectors
+		this.rightVector = this.orientationMatrix.multiplyVec6(Mandelbrot6DState.RIGHT_VECTOR);
+		this.upVector = this.orientationMatrix.multiplyVec6(Mandelbrot6DState.UP_VECTOR);
+	}
+
+	clearVelocities() {
+		this.velocity = new Vec6(0, 0, 0, 0, 0, 0);
+		this.zoomVelocity = 0;
+		this.rotationVelocity = 0;
+	}
+
+	/**
+	 * Adjust exp-lerp based on user settings
+	 */
+	private applySpringSettings(value: number): number {
+		const scale = this.springScale;
+		if (!isFinite(scale)) return 0;
+		return value ** scale;
+	}
+
+	private indicatorEffectiveSize(indicatorSize: number, setting: IndicatorSetting, tool: InputScheme): number {
+		if (setting === IndicatorSetting.Never) return 0;
+		if (setting === IndicatorSetting.WhenToolSelected && inputMap.scheme !== tool) {
+			return 0;
+		}
+		return indicatorSize / this.zoomLevel;
+	}
+}
+
+export class InterpolatedMandelbrotState {
+	static readonly RIGHT_VECTOR = new Vec6(1, 0, 0, 0, 0, 0);
+	static readonly UP_VECTOR = new Vec6(0, 1, 0, 0, 0, 0);
+	static readonly MANDELBROT_INTERPOLATION = new Vec3(0, 1, 0);
+
+	readonly upVector = InterpolatedMandelbrotState.UP_VECTOR;
+	readonly rightVector = InterpolatedMandelbrotState.RIGHT_VECTOR;
+
+	readonly moveOnLocalAxes = false;
+	readonly rotateOnLocalAxes = false;
+
+	position = $state(mandelbrotPreset.position);
+	velocity = new Vec6(0, 0, 0, 0, 0, 0);
+	
+	zoomLevel = $state(0);
+
+	zoom = $state(mandelbrotPreset.zoom);
+	zoomVelocity = $state(0);
+	rotationVelocity = $state(0);
+
+	// Indicator settings
+	zIndicatorSize = $state(0.0025);
+	eIndicatorSize = $state(0.0025);
+
+	zIndicatorSetting = $state(IndicatorSetting.Always);
+	eIndicatorSetting = $state(IndicatorSetting.Always);
+
+	speedScale = $state(1.0);
+	springScale = $state(1.0);
+
+	lerpRotation = new Vec2(0, 0);
+	lerp = $state(InterpolatedMandelbrotState.MANDELBROT_INTERPOLATION);
+
+	private lastTime = 0;
+
+	get zIndicatorEffectiveSize() {
+		return this.indicatorEffectiveSize(this.zIndicatorSize, this.zIndicatorSetting, juliaWiseInputScheme);
+	}
+
+	get eIndicatorEffectiveSize() {
+		return this.indicatorEffectiveSize(this.eIndicatorSize, this.eIndicatorSetting, juliaWiseInputScheme);
+	}
+
+	/**
+	 * Rotate the camera by the specified plane mappings and amount.
+	 */
+	rotateByPlaneMappings(mappings: PlaneMapping[], amount: number) {
+		const normalizedAmount = amount / mappings.length;
+		for (const mapping of mappings) {
+			const { axis1, axis2 } = mapping;
+			
+			const isJuliaWise = mandelbrotToJuliaMappings.some(m => m.axis1 === axis1 && m.axis2 === axis2);
+			
+			if (isJuliaWise) {
+				this.lerpRotation.y += normalizedAmount;
+			}
+
+			const isXWise = mandelbrotToExponentMappings.some(m => m.axis1 === axis1 && m.axis2 === axis2);
+
+			if (isXWise) {
+				this.lerpRotation.x += normalizedAmount;
+			}
+		}
+	}
+
+	/**
+	 * Update state
+	 */
+	update(currentTime: number): void {
+		// Calculate delta time
+		const deltaTime = (this.lastTime === 0 ? 0 : (currentTime - this.lastTime) / 1000);
+		this.lastTime = currentTime;
+		
+		// Process input
+		let moveDirection = new Vec2(0, 0);
+		let secondaryMovement = 0;
+		
+		if (inputMap.isMovingLeft) moveDirection.x -= 1.0;
+		if (inputMap.isMovingRight) moveDirection.x += 1.0;
+		
+		if (inputMap.isMovingUp) moveDirection.y += 1.0;
+		if (inputMap.isMovingDown) moveDirection.y -= 1.0;
+		
+		if (inputMap.isSneaking) secondaryMovement += 1.0;
+		if (inputMap.isJumping) secondaryMovement -= 1.0;
+		
+		// Normalize movement direction
+		if (moveDirection.length() > 0.0) {
+			moveDirection = moveDirection.normalize();
+		}
+		
+		// Calculate target velocity
+		const inputScheme = inputMap.scheme;
+		const targetVelocity =
+			inputMap.scheme.horizontalAxis.scale(moveDirection.x)
+			.add(inputMap.scheme.verticalAxis.scale(moveDirection.y))
+			.scale(this.speedScale);
+
+		const targetZoomVelocity = secondaryMovement * inputScheme.zoomSpeed * this.speedScale;
+		const targetRotationVelocity = secondaryMovement * inputScheme.rotateSpeed * this.speedScale;
+
+		// Accelerate towards target velocity
+		const velocityLerp = expLerpFactor(this.applySpringSettings(inputScheme.velocityLerp), deltaTime);
+		const rotationVelocityLerp = expLerpFactor(this.applySpringSettings(inputScheme.rotationVelocityLerp), deltaTime);
+		this.velocity = this.velocity.mix(targetVelocity, velocityLerp);
+		this.zoomVelocity = lerp(this.zoomVelocity, targetZoomVelocity, velocityLerp);
+		this.rotationVelocity = lerp(this.rotationVelocity, targetRotationVelocity, rotationVelocityLerp);
 
 		// Apply velocity
 		this.zoom += this.zoomVelocity * deltaTime;
@@ -144,13 +318,36 @@ export class MandelbrotState {
 		}
 
 		// Update the right / up vectors
-		this.rightVector = this.orientationMatrix.multiplyVec6(MandelbrotState.RIGHT_VECTOR);
-		this.upVector = this.orientationMatrix.multiplyVec6(MandelbrotState.UP_VECTOR);
+		this.lerp = this.pitchYawToDirection(this.lerpRotation.x, this.lerpRotation.y);
 	}
 
 	clearVelocities() {
 		this.velocity = new Vec6(0, 0, 0, 0, 0, 0);
 		this.zoomVelocity = 0;
 		this.rotationVelocity = 0;
+	}
+
+	private pitchYawToDirection(pitch: number, yaw: number): Vec3 {
+		const y = Math.cos(pitch) * Math.cos(yaw);
+		const x =  Math.cos(pitch) * Math.sin(yaw);
+		const z = Math.sin(pitch);
+		return new Vec3(x, y, z);
+	}
+
+	/**
+	 * Adjust exp-lerp based on user settings
+	 */
+	private applySpringSettings(value: number): number {
+		const scale = this.springScale;
+		if (!isFinite(scale)) return 0;
+		return value ** scale;
+	}
+
+	private indicatorEffectiveSize(indicatorSize: number, setting: IndicatorSetting, tool: InputScheme): number {
+		if (setting === IndicatorSetting.Never) return 0;
+		if (setting === IndicatorSetting.WhenToolSelected && inputMap.scheme !== tool) {
+			return 0;
+		}
+		return indicatorSize / this.zoomLevel;
 	}
 }

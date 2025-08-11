@@ -7,33 +7,35 @@ export class Mat6 {
 	// Store as column-major order (like OpenGL)
 	private m: Float64Array;
 
-	constructor(values?: number[]) {
+	private constructor(array?: number[]) {
 		this.m = new Float64Array(36);
-		if (values) {
-			if (values.length !== 36) {
-				throw new Error('Mat6 constructor requires exactly 36 values');
-			}
-			this.m.set(values);
+		if (array) {
+			this.m.set(array);
 		} else {
-			// Initialize as identity matrix
 			this.identity();
 		}
 	}
 
 	static fromMaybeArray(arr: unknown): Mat6 {
-		if (!Array.isArray(arr) || arr.length !== 36 || !arr.every(Number.isFinite)) {
+		if (!Array.isArray(arr) || !arr.every(Number.isFinite)) {
 			throw new Error('Invalid Mat6 array');
 		}
-		return new Mat6(arr as number[]);
+		return Mat6.fromArray(arr as number[]);
+	}
+
+	static fromArray(array: number[]): Mat6 {
+		if (array.length !== 36) throw new Error('Mat6 must have 36 elements');
+		return new Mat6(array);
+	}
+
+	static identity() {
+		return new Mat6;
 	}
 
 	toArray(): number[] {
 		return Array.from(this.m);
 	}
 
-	/**
-	 * Set this matrix to the identity matrix
-	 */
 	identity(): Mat6 {
 		this.m.fill(0);
 		for (let i = 0; i < 6; i++) {
@@ -42,31 +44,30 @@ export class Mat6 {
 		return this;
 	}
 
-	/**
-	 * Get matrix element at row i, column j
-	 */
-	get(i: number, j: number): number | undefined {
-		return this.m[j * 6 + i];
+	getElement(row: number, col: number): number | undefined {
+		return this.m[col * 6 + row];
 	}
 
-	/**
-	 * Set matrix element at row i, column j
-	 */
-	set(i: number, j: number, value: number): void {
-		this.m[j * 6 + i] = value;
+	setElement(row: number, col: number, value: number): void {
+		this.m[col * 6 + row] = value;
 	}
 
-	/**
-	 * Multiply this matrix by a Vec6
-	 */
+	clone(): Mat6 {
+		return new Mat6().set(this)
+	}
+
+	set(other: Mat6): Mat6 {
+		this.m.set(other.m);
+		return this;
+	}
+
 	multiplyVec6(v: Vec6): Vec6 {
-		const result = new Vec6(0, 0, 0, 0, 0, 0);
 		const components = [v.x, v.y, v.z, v.w, v.v, v.u];
 		const resultComponents = [0, 0, 0, 0, 0, 0];
 
 		for (let i = 0; i < 6; i++) {
 			for (let j = 0; j < 6; j++) {
-				resultComponents[i]! += this.get(i, j)! * components[j]!;
+				resultComponents[i]! += this.getElement(i, j)! * components[j]!;
 			}
 		}
 
@@ -80,18 +81,15 @@ export class Mat6 {
 		);
 	}
 
-	/**
-	 * Multiply this matrix by another matrix
-	 */
 	multiply(other: Mat6): Mat6 {
 		const result = new Mat6();
 		for (let i = 0; i < 6; i++) {
 			for (let j = 0; j < 6; j++) {
 				let sum = 0;
 				for (let k = 0; k < 6; k++) {
-					sum += this.get(i, k)! * other.get(k, j)!;
+					sum += this.getElement(i, k)! * other.getElement(k, j)!;
 				}
-				result.set(i, j, sum);
+				result.setElement(i, j, sum);
 			}
 		}
 		return result;
@@ -103,24 +101,78 @@ export class Mat6 {
 	 * @param axis2 Second axis index (0-5)
 	 * @param angle Rotation angle in radians
 	 */
-	static createPlaneRotation(axis1: number, axis2: number, angle: number): Mat6 {
+	static rotationFromAxisIndices(axis1: number, axis2: number, angle: number): Mat6 {
 		const matrix = new Mat6();
 		const cos = Math.cos(angle);
 		const sin = Math.sin(angle);
 
 		// Set rotation in the specified plane
-		matrix.set(axis1, axis1, cos);
-		matrix.set(axis1, axis2, -sin);
-		matrix.set(axis2, axis1, sin);
-		matrix.set(axis2, axis2, cos);
+		matrix.setElement(axis1, axis1, cos);
+		matrix.setElement(axis1, axis2, -sin);
+		matrix.setElement(axis2, axis1, sin);
+		matrix.setElement(axis2, axis2, cos);
 
 		return matrix;
 	}
 
+	static createPlaneMapping(fromAxis1: number, fromAxis2: number, toAxis1: number, toAxis2: number): Mat6 {
+		return (
+			Mat6.rotationFromAxisIndices(fromAxis1, toAxis1, Math.PI / 2)
+			.multiply(Mat6.rotationFromAxisIndices(fromAxis2, toAxis2, Math.PI / 2))
+		)
+	}
+
+
 	/**
-	 * Clone this matrix
+	 * Create a rotation matrix around a plane defined by two Vec6 axes
+	 * The vectors will be orthogonalized using Gram-Schmidt process
+	 * @param axis1 First axis vector (will be normalized)
+	 * @param axis2 Second axis vector (will be orthogonalized to axis1 and normalized)
+	 * @param angle Rotation angle in radians
 	 */
-	clone(): Mat6 {
-		return new Mat6(Array.from(this.m));
+	static rotationFromAxes(axis1: Vec6, axis2: Vec6, angle: number): Mat6 {
+		// Normalize the first axis
+		const u1 = axis1.normalize();
+		
+		// Orthogonalize the second axis using Gram-Schmidt
+		const proj = u1.scale(u1.dot(axis2));
+		const u2 = axis2.subtract(proj).normalize();
+		
+		// If vectors are parallel, return identity
+		if (u2.length() < 1e-10) {
+			return Mat6.identity();
+		}
+		
+		const cos = Math.cos(angle);
+		const sin = Math.sin(angle);
+		
+		// Create rotation matrix: I + sin(θ)(u1⊗u2 - u2⊗u1) + (cos(θ)-1)(u1⊗u1 + u2⊗u2)
+		const matrix = Mat6.identity();
+		
+		// Convert Vec6 to arrays for easier component access
+		const u1Array = u1.toArray();
+		const u2Array = u2.toArray();
+		
+		// For each matrix element
+		for (let i = 0; i < 6; i++) {
+			for (let j = 0; j < 6; j++) {
+				const u1i = u1Array[i] ?? 0;
+				const u1j = u1Array[j] ?? 0;
+				const u2i = u2Array[i] ?? 0;
+				const u2j = u2Array[j] ?? 0;
+				
+				// Apply Rodrigues' rotation formula in the plane
+				// Flipped sign to match standard rotation convention (from u1 towards u2)
+				const delta = sin * (u2i * u1j - u1i * u2j) + 
+							 (cos - 1) * (u1i * u1j + u2i * u2j);
+				
+				const currentValue = matrix.getElement(i, j);
+				if (currentValue !== undefined) {
+					matrix.setElement(i, j, currentValue + delta);
+				}
+			}
+		}
+		
+		return matrix;
 	}
 }
