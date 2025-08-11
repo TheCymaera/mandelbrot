@@ -111,7 +111,7 @@
 	}
 
 	function getInputSchemeName(type: InputScheme): string {
-		if (type === regularInputScheme) return 'Regular';
+		if (type === regularInputScheme) return 'Classic';
 		if (type === juliaWardInputScheme) return 'Julia-ward';
 		if (type === xWardInputScheme) return 'X-ward';
 		return 'Custom';
@@ -233,9 +233,9 @@
 			</div>
 
 			<div class="text-sm mb-3 font-mono bg-surfaceContainer p-2 rounded">
-				z = (p.z, p.w) <br>
-				c = (p.x, p.y) <br>
-				e = (p.v, p.u)
+				z = (p.z, p.w) <span class="opacity-30">// Julia</span><br>
+				c = (p.x, p.y) <span class="opacity-30">// Classic Mandelbrot</span><br>
+				e = (p.v, p.u) <span class="opacity-30">// X</span>
 			</div>
 
 			<div class="text-sm mb-3 font-mono bg-surfaceContainer p-2 rounded">
