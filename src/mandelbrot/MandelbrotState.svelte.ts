@@ -300,6 +300,10 @@ export class InterpolatedMandelbrotState {
 			this.rotationVelocity = 0;
 		}
 
+		// Wrap rotation
+		this.lerpRotation.x = wrapAngle(this.lerpRotation.x);
+		this.lerpRotation.y = wrapAngle(this.lerpRotation.y);
+
 		// Update the right / up vectors
 		this.lerp = this.pitchYawToDirection(this.lerpRotation.x, this.lerpRotation.y);
 
@@ -339,4 +343,8 @@ function applySpringSettings(value: number, springScale: number): number {
 	const scale = springScale;
 	if (!isFinite(scale)) return 0;
 	return value ** scale;
+}
+
+function wrapAngle(angle: number): number {
+	return ((angle + Math.PI) % (2 * Math.PI)) - Math.PI;
 }
