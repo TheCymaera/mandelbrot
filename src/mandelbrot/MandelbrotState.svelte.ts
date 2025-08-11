@@ -2,7 +2,7 @@ import { Vec2 } from '../math/Vec2.js';
 import { Vec6 } from '../math/Vec6.js';
 import { Mat6 } from '../math/Mat6.js';
 import { inputMap } from './inputMap.svelte.js';
-import { juliaWiseInputScheme, mandelbrotToExponentMappings, mandelbrotToJuliaMappings, type InputScheme, type PlaneMapping } from './inputSchemes.js';
+import { juliaWiseInputScheme, mandelbrotToExponentMappings, mandelbrotToJuliaMappings, xWiseInputScheme, type InputScheme, type PlaneMapping } from './inputSchemes.js';
 import { mandelbrotPreset } from './orientationPresets.js';
 import { expLerpFactor, lerp } from '../math/utilities.js';
 import { Vec3 } from '../math/Vec3.js';
@@ -32,8 +32,8 @@ export class Mandelbrot6DState {
 	zIndicatorSize = $state(0.0025);
 	eIndicatorSize = $state(0.0025);
 
-	zIndicatorSetting = $state(IndicatorSetting.Always);
-	eIndicatorSetting = $state(IndicatorSetting.Always);
+	zIndicatorSetting = $state(IndicatorSetting.WhenToolSelected);
+	eIndicatorSetting = $state(IndicatorSetting.WhenToolSelected);
 
 	speedScale = $state(1.0);
 	springScale = $state(1.0);
@@ -46,11 +46,11 @@ export class Mandelbrot6DState {
 	private lastTime = 0;
 
 	get zIndicatorEffectiveSize() {
-		return this.indicatorEffectiveSize(this.zIndicatorSize, this.zIndicatorSetting, juliaWiseInputScheme);
+		return indicatorEffectiveSize(this.zIndicatorSize, this.zIndicatorSetting, juliaWiseInputScheme, this.zoomLevel);
 	}
 
 	get eIndicatorEffectiveSize() {
-		return this.indicatorEffectiveSize(this.eIndicatorSize, this.eIndicatorSetting, juliaWiseInputScheme);
+		return indicatorEffectiveSize(this.eIndicatorSize, this.eIndicatorSetting, xWiseInputScheme, this.zoomLevel);
 	}
 
 	/**
@@ -91,8 +91,8 @@ export class Mandelbrot6DState {
 		if (inputMap.isMovingUp) moveDirection.y += 1.0;
 		if (inputMap.isMovingDown) moveDirection.y -= 1.0;
 		
-		if (inputMap.isSneaking) secondaryMovement += 1.0;
-		if (inputMap.isJumping) secondaryMovement -= 1.0;
+		if (inputMap.isSneaking) secondaryMovement -= 1.0;
+		if (inputMap.isJumping) secondaryMovement += 1.0;
 		
 		// Normalize movement direction
 		if (moveDirection.length() > 0.0) {
@@ -118,8 +118,8 @@ export class Mandelbrot6DState {
 		const targetRotationVelocity = secondaryMovement * inputScheme.rotateSpeed * this.speedScale;
 
 		// Accelerate towards target velocity
-		const velocityLerp = expLerpFactor(this.applySpringSettings(inputScheme.velocityLerp), deltaTime);
-		const rotationVelocityLerp = expLerpFactor(this.applySpringSettings(inputScheme.rotationVelocityLerp), deltaTime);
+		const velocityLerp = expLerpFactor(applySpringSettings(inputScheme.velocityLerp, this.springScale), deltaTime);
+		const rotationVelocityLerp = expLerpFactor(applySpringSettings(inputScheme.rotationVelocityLerp, this.springScale), deltaTime);
 		this.velocity = this.velocity.mix(targetVelocity, velocityLerp);
 		this.zoomVelocity = lerp(this.zoomVelocity, targetZoomVelocity, velocityLerp);
 		this.rotationVelocity = lerp(this.rotationVelocity, targetRotationVelocity, rotationVelocityLerp);
@@ -162,23 +162,6 @@ export class Mandelbrot6DState {
 		this.zoomVelocity = 0;
 		this.rotationVelocity = 0;
 	}
-
-	/**
-	 * Adjust exp-lerp based on user settings
-	 */
-	private applySpringSettings(value: number): number {
-		const scale = this.springScale;
-		if (!isFinite(scale)) return 0;
-		return value ** scale;
-	}
-
-	private indicatorEffectiveSize(indicatorSize: number, setting: IndicatorSetting, tool: InputScheme): number {
-		if (setting === IndicatorSetting.Never) return 0;
-		if (setting === IndicatorSetting.WhenToolSelected && inputMap.scheme !== tool) {
-			return 0;
-		}
-		return indicatorSize / this.zoomLevel;
-	}
 }
 
 export class InterpolatedMandelbrotState {
@@ -202,26 +185,26 @@ export class InterpolatedMandelbrotState {
 	rotationVelocity = $state(0);
 
 	// Indicator settings
-	zIndicatorSize = $state(0.0025);
-	eIndicatorSize = $state(0.0025);
+	zIndicatorSize = $state(0.0025 * 2);
+	eIndicatorSize = $state(0.0025 * 2);
 
-	zIndicatorSetting = $state(IndicatorSetting.Always);
-	eIndicatorSetting = $state(IndicatorSetting.Always);
+	zIndicatorSetting = $state(IndicatorSetting.WhenToolSelected);
+	eIndicatorSetting = $state(IndicatorSetting.WhenToolSelected);
 
 	speedScale = $state(1.0);
 	springScale = $state(1.0);
 
-	lerpRotation = new Vec2(0, 0);
+	lerpRotation = $state(new Vec2(0, 0));
 	lerp = $state(InterpolatedMandelbrotState.MANDELBROT_INTERPOLATION);
 
 	private lastTime = 0;
 
 	get zIndicatorEffectiveSize() {
-		return this.indicatorEffectiveSize(this.zIndicatorSize, this.zIndicatorSetting, juliaWiseInputScheme);
+		return indicatorEffectiveSize(this.zIndicatorSize, this.zIndicatorSetting, juliaWiseInputScheme, this.zoomLevel);
 	}
 
 	get eIndicatorEffectiveSize() {
-		return this.indicatorEffectiveSize(this.eIndicatorSize, this.eIndicatorSetting, juliaWiseInputScheme);
+		return indicatorEffectiveSize(this.eIndicatorSize, this.eIndicatorSetting, xWiseInputScheme, this.zoomLevel);
 	}
 
 	/**
@@ -264,8 +247,8 @@ export class InterpolatedMandelbrotState {
 		if (inputMap.isMovingUp) moveDirection.y += 1.0;
 		if (inputMap.isMovingDown) moveDirection.y -= 1.0;
 		
-		if (inputMap.isSneaking) secondaryMovement += 1.0;
-		if (inputMap.isJumping) secondaryMovement -= 1.0;
+		if (inputMap.isSneaking) secondaryMovement -= 1.0;
+		if (inputMap.isJumping) secondaryMovement += 1.0;
 		
 		// Normalize movement direction
 		if (moveDirection.length() > 0.0) {
@@ -283,8 +266,8 @@ export class InterpolatedMandelbrotState {
 		const targetRotationVelocity = secondaryMovement * inputScheme.rotateSpeed * this.speedScale;
 
 		// Accelerate towards target velocity
-		const velocityLerp = expLerpFactor(this.applySpringSettings(inputScheme.velocityLerp), deltaTime);
-		const rotationVelocityLerp = expLerpFactor(this.applySpringSettings(inputScheme.rotationVelocityLerp), deltaTime);
+		const velocityLerp = expLerpFactor(applySpringSettings(inputScheme.velocityLerp, this.springScale), deltaTime);
+		const rotationVelocityLerp = expLerpFactor(applySpringSettings(inputScheme.rotationVelocityLerp, this.springScale), deltaTime);
 		this.velocity = this.velocity.mix(targetVelocity, velocityLerp);
 		this.zoomVelocity = lerp(this.zoomVelocity, targetZoomVelocity, velocityLerp);
 		this.rotationVelocity = lerp(this.rotationVelocity, targetRotationVelocity, rotationVelocityLerp);
@@ -319,6 +302,9 @@ export class InterpolatedMandelbrotState {
 
 		// Update the right / up vectors
 		this.lerp = this.pitchYawToDirection(this.lerpRotation.x, this.lerpRotation.y);
+
+		// trigger reactivity
+		this.lerpRotation = this.lerpRotation.clone();
 	}
 
 	clearVelocities() {
@@ -333,21 +319,24 @@ export class InterpolatedMandelbrotState {
 		const z = Math.sin(pitch);
 		return new Vec3(x, y, z);
 	}
+}
 
-	/**
-	 * Adjust exp-lerp based on user settings
-	 */
-	private applySpringSettings(value: number): number {
-		const scale = this.springScale;
-		if (!isFinite(scale)) return 0;
-		return value ** scale;
-	}
 
-	private indicatorEffectiveSize(indicatorSize: number, setting: IndicatorSetting, tool: InputScheme): number {
-		if (setting === IndicatorSetting.Never) return 0;
-		if (setting === IndicatorSetting.WhenToolSelected && inputMap.scheme !== tool) {
-			return 0;
-		}
-		return indicatorSize / this.zoomLevel;
+function indicatorEffectiveSize(indicatorSize: number, setting: IndicatorSetting, tool: InputScheme, zoomLevel: number): number {
+	if (setting === IndicatorSetting.Never) return 0;
+	if (setting === IndicatorSetting.WhenToolSelected && 
+		(inputMap.scheme.horizontalAxis !== tool.horizontalAxis &&
+		inputMap.scheme.verticalAxis !== tool.verticalAxis)) {
+		return 0;
 	}
+	return indicatorSize / zoomLevel;
+}
+
+/**
+ * Adjust exp-lerp based on user settings
+ */
+function applySpringSettings(value: number, springScale: number): number {
+	const scale = springScale;
+	if (!isFinite(scale)) return 0;
+	return value ** scale;
 }

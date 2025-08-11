@@ -47,7 +47,7 @@ export const regularInputScheme: InputScheme = {
 	rotationPlanes: [],
 	
 	velocityLerp: 3.5,
-	zoomSpeed: 2.0,
+	zoomSpeed: -2.0,
 
 	rotateSpeed: .2,
 	rotationVelocityLerp: 10,

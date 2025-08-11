@@ -31,7 +31,7 @@ export const mandelbrotPreset: Preset6D = {
 	name: "Mandelbrot (Identity)",
 	orientationMatrix: Mat6.identity(),
 	position: new Vec6(0,0, 0,0, 2,0),
-	zoom: -2.0
+	zoom: -2.2
 };
 
 export const juliaPreset: Preset6D = {

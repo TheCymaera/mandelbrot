@@ -75,6 +75,13 @@ export class MandelbrotRenderer {
 
 		this.gl.uniform3f(this.uniforms.u_interpolation, interpolation.x, interpolation.y, interpolation.z);
 
+		this.gl.uniform1f(this.uniforms.u_renderIndicatorRotation, state instanceof InterpolatedMandelbrotState ? 1 : 0);
+		if (state instanceof InterpolatedMandelbrotState) {
+			this.gl.uniform1f(this.uniforms.u_zIndicatorRotation, state.lerpRotation.y);
+			this.gl.uniform1f(this.uniforms.u_eIndicatorRotation, state.lerpRotation.x);
+		}
+
+
 		// Draw
 		this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
 	}
@@ -112,6 +119,10 @@ export class MandelbrotRenderer {
 			u_zoom: requireUniform(gl, program, 'u_zoom'),
 			u_screenSize: requireUniform(gl, program, 'u_screenSize'),
 			u_interpolation: requireUniform(gl, program, 'u_interpolation'),
+
+			u_zIndicatorRotation: requireUniform(gl, program, 'u_zIndicatorRotation'),
+			u_eIndicatorRotation: requireUniform(gl, program, 'u_eIndicatorRotation'),
+			u_renderIndicatorRotation: requireUniform(gl, program, 'u_renderIndicatorRotation'),
 		} as const;
 	}
 }
