@@ -79,6 +79,7 @@
 	const jsonString = $derived(prettyPrintJson({
 		position: mandelbrot.position.toArray(),
 		orientationMatrix: mandelbrot.orientationMatrix.toArray(),
+		zoom: mandelbrot.zoom,
 	}));
 
 	
@@ -96,10 +97,12 @@
 			// Apply data
 			mandelbrot.position = Vec6.fromMaybeArray(data.position);
 			mandelbrot.orientationMatrix = Mat6.fromMaybeArray(data.orientationMatrix);
+			mandelbrot.zoom = data.zoom ?? mandelbrot.zoom;
 
+			// Reset velocities
 			mandelbrot.velocity = new Vec6(0, 0, 0, 0, 0, 0);
 			mandelbrot.zoomVelocity = 0;
-			mandelbrot.zoom = 0;
+			mandelbrot.rotationVelocity = 0;
 
 			jsonError = '';
 		} catch (error) {
