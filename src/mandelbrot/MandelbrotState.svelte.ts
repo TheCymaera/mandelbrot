@@ -2,6 +2,7 @@ import { Vec3 } from '../math/Vector.js';
 import { Vec6 } from '../math/Vec6.js';
 import { Mat6 } from '../math/Mat6.js';
 import { inputMap } from './inputMap.svelte.js';
+import type { PlaneMapping } from './inputSchemes.js';
 
 /**
  * State update logic ported from update.fsh
@@ -53,6 +54,18 @@ export class MandelbrotState {
 	 */
 	private mix(a: number, b: number, lerp: number): number {
 		return a + (b - a) * lerp;
+	}
+
+	/**
+	 * Rotate the camera by the specified plane mappings and amount.
+	 */
+	rotateByPlaneMappings(mappings: PlaneMapping[], amount: number) {
+		if (!amount) return;
+		for (const mapping of mappings) {
+			const { axis1, axis2 } = mapping;
+			const rotationMatrix = Mat6.createPlaneRotation(axis1, axis2, amount);
+			this.orientationMatrix = this.orientationMatrix.multiply(rotationMatrix);
+		}
 	}
 
 	/**
@@ -116,14 +129,8 @@ export class MandelbrotState {
 			this.position.u + scaledVelocity.u
 		);
 
-		for (const planeMappings of inputScheme.rotationPlanes) {
-			const amount = this.rotationVelocity * deltaTime;
-			if (!amount) continue;
+		this.rotateByPlaneMappings(inputScheme.rotationPlanes, this.rotationVelocity * deltaTime);
 
-			const rotationMatrix = Mat6.createPlaneRotation(planeMappings.axis1, planeMappings.axis2, amount);
-			this.orientationMatrix = this.orientationMatrix.multiply(rotationMatrix);
-		}
-		
 		// Zero velocities if small to prevent constant UI updates
 		const margin = 0.02;
 		if (this.velocity.length() < margin) {
@@ -139,6 +146,11 @@ export class MandelbrotState {
 		// Update the right / up vectors
 		this.rightVector = this.orientationMatrix.multiplyVec6(MandelbrotState.RIGHT_VECTOR);
 		this.upVector = this.orientationMatrix.multiplyVec6(MandelbrotState.UP_VECTOR);
+	}
 
+	clearVelocities() {
+		this.velocity = new Vec6(0, 0, 0, 0, 0, 0);
+		this.zoomVelocity = 0;
+		this.rotationVelocity = 0;
 	}
 }

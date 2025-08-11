@@ -1,4 +1,4 @@
-import { juliaWardInputScheme, regularInputScheme, xWardInputScheme, type InputScheme } from './inputSchemes';
+import { juliaWiseInputScheme, regularInputScheme, xWiseInputScheme, type InputScheme } from './inputSchemes';
 
 export const inputMap = new class InputMap {
 	scheme = $state({...regularInputScheme});
@@ -42,8 +42,8 @@ export const inputMap = new class InputMap {
 
 			const movementModes: Record<string, InputScheme> = {
 				'Digit1': regularInputScheme,
-				'Digit2': juliaWardInputScheme,
-				'Digit3': xWardInputScheme,
+				'Digit2': juliaWiseInputScheme,
+				'Digit3': xWiseInputScheme,
 			};
 
 			const mode = movementModes[e.code];

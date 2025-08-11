@@ -118,26 +118,6 @@ export class Mat6 {
 	}
 
 	/**
-	 * Create a rotation that maps the xy-plane to another plane pair
-	 * This is useful for the JULIA_WARD transformation
-	 */
-	static createPlaneMapping(fromAxis1: number, fromAxis2: number, toAxis1: number, toAxis2: number): Mat6 {
-		const matrix = new Mat6();
-		
-		// Clear the identity for the axes we're mapping
-		matrix.set(fromAxis1, fromAxis1, 0);
-		matrix.set(fromAxis2, fromAxis2, 0);
-		matrix.set(toAxis1, toAxis1, 0);
-		matrix.set(toAxis2, toAxis2, 0);
-
-		// Map from axes to to axes
-		matrix.set(toAxis1, fromAxis1, 1);   // fromAxis1 -> toAxis1
-		matrix.set(toAxis2, fromAxis2, 1);   // fromAxis2 -> toAxis2
-
-		return matrix;
-	}
-
-	/**
 	 * Clone this matrix
 	 */
 	clone(): Mat6 {

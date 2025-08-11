@@ -43,7 +43,7 @@ export const regularInputScheme: InputScheme = {
 	rotationVelocityLerp: 10,
 }
 
-export const juliaWardInputScheme: InputScheme = {
+export const juliaWiseInputScheme: InputScheme = {
 	horizontalAxis: new Vec6(0, 0, 1, 0, 0, 0).scale(.8),
 	verticalAxis: new Vec6(0, 0, 0, 1, 0, 0).scale(.8),
 	rotationPlanes: mandelbrotToJuliaMappings,
@@ -55,7 +55,7 @@ export const juliaWardInputScheme: InputScheme = {
 	rotationVelocityLerp: 10,
 }
 
-export const xWardInputScheme: InputScheme = {
+export const xWiseInputScheme: InputScheme = {
 	horizontalAxis: new Vec6(0, 0, 0, 0, 1, 0).scale(.8),
 	verticalAxis: new Vec6(0, 0, 0, 0, 0, 1).scale(.8),
 	rotationPlanes: mandelbrotToExponentMappings,

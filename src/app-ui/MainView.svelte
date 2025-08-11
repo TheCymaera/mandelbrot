@@ -9,7 +9,7 @@
 	import { fa5_solid_bars, fa5_solid_info, fa5_solid_times } from 'fontawesome-svgs';
 	import { Vec6 } from '../math/Vec6.js';
 	import { Mat6 } from '../math/Mat6.js';
-	import { juliaWardInputScheme, mandelbrotToExponentMappings, mandelbrotToJuliaMappings, regularInputScheme, xWardInputScheme, type InputScheme, type PlaneMapping } from '../mandelbrot/inputSchemes.js';
+	import { juliaWiseInputScheme, mandelbrotToExponentMappings, mandelbrotToJuliaMappings, regularInputScheme, xWiseInputScheme, type InputScheme, type PlaneMapping } from '../mandelbrot/inputSchemes.js';
 	import { deepEquals } from '../utilities/deepEquals.js';
 	import SelectField from '../ui-components/SelectField.svelte';
 	
@@ -99,10 +99,7 @@
 			mandelbrot.orientationMatrix = Mat6.fromMaybeArray(data.orientationMatrix);
 			mandelbrot.zoom = data.zoom ?? mandelbrot.zoom;
 
-			// Reset velocities
-			mandelbrot.velocity = new Vec6(0, 0, 0, 0, 0, 0);
-			mandelbrot.zoomVelocity = 0;
-			mandelbrot.rotationVelocity = 0;
+			mandelbrot.clearVelocities();
 
 			jsonError = '';
 		} catch (error) {
@@ -112,8 +109,8 @@
 
 	function getInputSchemeName(type: InputScheme): string {
 		if (type === regularInputScheme) return 'Classic';
-		if (type === juliaWardInputScheme) return 'Julia-ward';
-		if (type === xWardInputScheme) return 'X-ward';
+		if (type === juliaWiseInputScheme) return 'Julia-wise';
+		if (type === xWiseInputScheme) return 'X-wise';
 		return 'Custom';
 	}
 
@@ -185,7 +182,7 @@
 			<h3 class="text-lg font-semibold mb-2">Input Scheme</h3>
 			
 			<div class="grid grid-cols-3 gap-2 text-sm mb-4">
-				{#each [regularInputScheme, juliaWardInputScheme, xWardInputScheme] as type}
+				{#each [regularInputScheme, juliaWiseInputScheme, xWiseInputScheme] as type}
 					<Button 
 						onPress={() => inputMap.scheme = type}
 						className="w-full p-2! rounded! "
