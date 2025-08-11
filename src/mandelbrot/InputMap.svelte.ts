@@ -1,7 +1,7 @@
-import { juliaWardInputScheme, regularInputScheme, xWardInputScheme, type InputScheme } from './movementPresets';
+import { juliaWardInputScheme, regularInputScheme, xWardInputScheme, type InputScheme } from './inputSchemes';
 
 export const inputMap = new class InputMap {
-	inputScheme = $state({...regularInputScheme});
+	scheme = $state({...regularInputScheme});
 
 
 	get isMovingLeft(): boolean {
@@ -48,7 +48,7 @@ export const inputMap = new class InputMap {
 
 			const mode = movementModes[e.code];
 			if (!mode) return;
-			this.inputScheme = { ...mode };
+			this.scheme = { ...mode };
 		});
 		
 		window.addEventListener('keyup', (e) => {

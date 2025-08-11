@@ -26,10 +26,10 @@ export const mandelbrotToExponentMappings: PlaneMapping[] = [
 	{ axis1: 1, axis2: 5 },
 ]
 
-export const juliaToExponentMappings: PlaneMapping[] = [
-	{ axis1: 2, axis2: 4 },
-	{ axis1: 3, axis2: 5 },
-]
+//export const juliaToExponentMappings: PlaneMapping[] = [
+//	{ axis1: 2, axis2: 4 },
+//	{ axis1: 3, axis2: 5 },
+//]
 
 export const regularInputScheme: InputScheme = {
 	horizontalAxis: new Vec6(1, 0, 0, 0, 0, 0).scale(.8),
@@ -37,10 +37,10 @@ export const regularInputScheme: InputScheme = {
 	rotationPlanes: [],
 	
 	velocityLerp: 3.5,
-	rotationVelocityLerp: 0,
-
 	zoomSpeed: 2.0,
+
 	rotateSpeed: .2,
+	rotationVelocityLerp: 10,
 }
 
 export const juliaWardInputScheme: InputScheme = {
@@ -49,10 +49,10 @@ export const juliaWardInputScheme: InputScheme = {
 	rotationPlanes: mandelbrotToJuliaMappings,
 	
 	velocityLerp: 5,
-	rotationVelocityLerp: 10,
-
 	zoomSpeed: 0,
+
 	rotateSpeed: .2,
+	rotationVelocityLerp: 10,
 }
 
 export const xWardInputScheme: InputScheme = {
@@ -61,8 +61,8 @@ export const xWardInputScheme: InputScheme = {
 	rotationPlanes: mandelbrotToExponentMappings,
 
 	velocityLerp: 5,
-	rotationVelocityLerp: 10,
-
 	zoomSpeed: 0,
+
 	rotateSpeed: .2,
+	rotationVelocityLerp: 10,
 }

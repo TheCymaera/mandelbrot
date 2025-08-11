@@ -2,16 +2,16 @@
 	import { onMount } from 'svelte';
 	import { MandelbrotRenderer } from '../mandelbrot/MandelbrotRenderer.js';
 	import { MandelbrotState } from '../mandelbrot/MandelbrotState.svelte.js';
-	import { inputMap } from '../mandelbrot/InputMap.svelte.js';
+	import { inputMap } from '../mandelbrot/inputMap.svelte.js';
 	import NumberField from '../ui-components/NumberField.svelte';
 	import Button from '../ui-components/Button.svelte';
 	import CircleButton from '../ui-components/CircleButton.svelte';
-	import { fa5_solid_bars, fa5_solid_times } from 'fontawesome-svgs';
+	import { fa5_solid_bars, fa5_solid_info, fa5_solid_times } from 'fontawesome-svgs';
 	import { Vec6 } from '../math/Vec6.js';
 	import { Mat6 } from '../math/Mat6.js';
-	import { juliaToExponentMappings, juliaWardInputScheme, mandelbrotToExponentMappings, mandelbrotToJuliaMappings, regularInputScheme, xWardInputScheme, type InputScheme, type PlaneMapping } from '../mandelbrot/movementPresets.js';
+	import { juliaWardInputScheme, mandelbrotToExponentMappings, mandelbrotToJuliaMappings, regularInputScheme, xWardInputScheme, type InputScheme, type PlaneMapping } from '../mandelbrot/inputSchemes.js';
 	import { deepEquals } from '../utilities/deepEquals.js';
-  import SelectField from '../ui-components/SelectField.svelte';
+	import SelectField from '../ui-components/SelectField.svelte';
 	
 	let canvas: HTMLCanvasElement;
 	let renderer: MandelbrotRenderer;
@@ -118,7 +118,6 @@
 		{ name: "None (Zoom)", rotation: regularInputScheme.rotationPlanes },
 		{ name: "Mandelbrot to Julia", rotation: mandelbrotToJuliaMappings },
 		{ name: "Mandelbrot to Exponent", rotation: mandelbrotToExponentMappings },
-		{ name: "Julia to Exponent", rotation: juliaToExponentMappings },
 		{ name: "XY plane", rotation: [{ axis1: 0, axis2: 1 }] },
 		{ name: "XZ plane", rotation: [{ axis1: 0, axis2: 2 }] },
 		{ name: "XW plane", rotation: [{ axis1: 0, axis2: 3 }] },
@@ -128,26 +127,35 @@
 		{ name: "YW plane", rotation: [{ axis1: 1, axis2: 3 }] },
 		{ name: "YV plane", rotation: [{ axis1: 1, axis2: 4 }] },
 		{ name: "YU plane", rotation: [{ axis1: 1, axis2: 5 }] },
-		{ name: "ZW plane", rotation: [{ axis1: 2, axis2: 3 }] },
-		{ name: "ZV plane", rotation: [{ axis1: 2, axis2: 4 }] },
-		{ name: "ZU plane", rotation: [{ axis1: 2, axis2: 5 }] },
-		{ name: "WV plane", rotation: [{ axis1: 3, axis2: 4 }] },
-		{ name: "WU plane", rotation: [{ axis1: 3, axis2: 5 }] },
-		{ name: "VU plane", rotation: [{ axis1: 4, axis2: 5 }] },
+		{ name: "ZW plane (No Effect)", rotation: [{ axis1: 2, axis2: 3 }] },
+		{ name: "ZV plane (No Effect)", rotation: [{ axis1: 2, axis2: 4 }] },
+		{ name: "ZU plane (No Effect)", rotation: [{ axis1: 2, axis2: 5 }] },
+		{ name: "WV plane (No Effect)", rotation: [{ axis1: 3, axis2: 4 }] },
+		{ name: "WU plane (No Effect)", rotation: [{ axis1: 3, axis2: 5 }] },
+		{ name: "VU plane (No Effect)", rotation: [{ axis1: 4, axis2: 5 }] },
 	]
 
 </script>
-
 <main class="w-full h-screen bg-background overflow-hidden relative flex">
 	<!-- Canvas container that adjusts to sidebar -->
 	<div class="relative flex-1 transition-all duration-300" style="margin-left: {sidebarOpen ? sidebarWidth + 'px' : '0px'}">
-		<CircleButton 
-			onPress={()=>(sidebarOpen = !sidebarOpen)}
-			className="absolute top-4 left-4"
-			label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
-		>
-			{@html sidebarOpen ? fa5_solid_times : fa5_solid_bars}
-		</CircleButton>
+		<div class="
+			absolute top-0 left-0 flex flex-col gap-4 p-4
+			w-min h-full
+			opacity-0 hover:opacity-100 transition-opacity delay-50 duration-500
+		">
+			<CircleButton 
+				onPress={()=>(sidebarOpen = !sidebarOpen)}
+				label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
+			>
+				{@html sidebarOpen ? fa5_solid_times : fa5_solid_bars}
+			</CircleButton>
+			<CircleButton 
+				onPress={()=>location.hash = "#info"}
+			>
+				{@html fa5_solid_info}
+			</CircleButton>
+		</div>
 		<canvas 
 			bind:this={canvas}
 			class="w-full h-full block outline-none"
@@ -167,23 +175,22 @@
 			<div class="grid grid-cols-3 gap-2 text-sm mb-4">
 				{#each [regularInputScheme, juliaWardInputScheme, xWardInputScheme] as type}
 					<Button 
-						onPress={() => inputMap.inputScheme = type}
+						onPress={() => inputMap.scheme = type}
 						className="w-full p-2! rounded! "
-						variant={deepEquals(inputMap.inputScheme, type) ? 'filled' : 'outlined'}
+						variant={deepEquals(inputMap.scheme, type) ? 'filled' : 'outlined'}
 					>
 						{getInputSchemeName(type)}
 					</Button>
 				{/each}
 			</div>
 
-			<!-- Movement Controls -->
-			<div class="text-sm mb-3">
-				{#snippet kbd(text: string)}
-					<kbd class="
-						bg-surfaceContainer text-onSurfaceContainer rounded px-3 ml-1 font-mono
-					">{text}</kbd>
-				{/snippet}
+			{#snippet kbd(text: string)}
+				<kbd class="
+					bg-surfaceContainer text-onSurfaceContainer rounded px-3 ml-1 font-mono
+				">{text}</kbd>
+			{/snippet}
 
+			<div class="text-sm mb-3">
 				<div class="flex items-center mb-1">
 					Press {@render kbd("1")}, {@render kbd("2")}, or {@render kbd("3")} to switch modes
 				</div>
@@ -198,12 +205,23 @@
 				</div>
 
 				<div class="flex items-center mb-1">
-					{inputMap.inputScheme.zoomSpeed ? "Zoom In / Out" : "Rotate"}
+					{inputMap.scheme.zoomSpeed ? "Zoom In / Out" : "Rotate"}
 
 					{@render kbd("Space")}
 					{@render kbd("Shift")}
 				</div>
 			</div>
+
+			<div class="text-sm mb-3 font-mono bg-surfaceContainer p-2 rounded">
+				z = (p.z, p.w) <br>
+				c = (p.x, p.y) <br>
+				e = (p.v, p.u)
+			</div>
+
+			<div class="text-sm mb-3 font-mono bg-surfaceContainer p-2 rounded">
+				z = z ^ e + c
+			</div>
+
 		</div>
 
 		<!-- Controls -->
@@ -221,12 +239,12 @@
 				<div class="col-span-2">
 					<SelectField
 						label="Rotational Plane"
-						value={inputMap.inputScheme.rotationPlanes}
+						value={inputMap.scheme.rotationPlanes}
 						options={rotations.map(r => ({ value: r.rotation, label: r.name }))}
 						onChange={e => {
-							inputMap.inputScheme.rotationPlanes = e.value;
-							inputMap.inputScheme.zoomSpeed = e.value.length == 0 ? regularInputScheme.zoomSpeed : 0;
-							console.log(inputMap.inputScheme.rotationPlanes, inputMap.inputScheme.zoomSpeed);
+							inputMap.scheme.rotationPlanes = e.value;
+							inputMap.scheme.zoomSpeed = e.value.length == 0 ? regularInputScheme.zoomSpeed : 0;
+							console.log(inputMap.scheme.rotationPlanes, inputMap.scheme.zoomSpeed);
 						}}
 					/>
 				</div>
@@ -269,40 +287,40 @@
 						hideLabel={true}
 						readonly={options.readonly}
 						value={options.vector.y}
-						onInput={e => options.vector.x = e.value}
+						onInput={e => options.vector.y = e.value}
 					/>
 					<NumberField
 						label="Z"
 						hideLabel={true}
 						readonly={options.readonly}
 						value={options.vector.z}
-						onInput={e => options.vector.x = e.value}
+						onInput={e => options.vector.z = e.value}
 					/>
 					<NumberField
 						label="W"
 						hideLabel={true}
 						readonly={options.readonly}
 						value={options.vector.w}
-						onInput={e => options.vector.x = e.value}
+						onInput={e => options.vector.w = e.value}
 					/>
 					<NumberField
 						label="V"
 						hideLabel={true}
 						readonly={options.readonly}
 						value={options.vector.v}
-						onInput={e => options.vector.x = e.value}
+						onInput={e => options.vector.v = e.value}
 					/>
 					<NumberField
 						label="U"
 						hideLabel={true}
 						readonly={options.readonly}
 						value={options.vector.u}
-						onInput={e => options.vector.x = e.value}
+						onInput={e => options.vector.u = e.value}
 					/>
 				</div>
 			{/snippet}
 
-			<h4 class="font-semibold mb-2">Camera</h4>
+			<h4 class="font-semibold mb-2">Position</h4>
 			{@render vector({ vector: mandelbrot.position, readonly: false })}
 			<br>
 

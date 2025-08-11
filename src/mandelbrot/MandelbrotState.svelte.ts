@@ -1,7 +1,7 @@
 import { Vec3 } from '../math/Vector.js';
 import { Vec6 } from '../math/Vec6.js';
 import { Mat6 } from '../math/Mat6.js';
-import { inputMap } from './InputMap.svelte.js';
+import { inputMap } from './inputMap.svelte.js';
 
 /**
  * State update logic ported from update.fsh
@@ -83,7 +83,7 @@ export class MandelbrotState {
 		}
 		
 		// Calculate target velocity
-		const inputScheme = inputMap.inputScheme;
+		const inputScheme = inputMap.scheme;
 		const horizontalAxis = this.orientationMatrix.multiplyVec6(inputScheme.horizontalAxis);
 		const verticalAxis = this.orientationMatrix.multiplyVec6(inputScheme.verticalAxis);
 
@@ -121,7 +121,6 @@ export class MandelbrotState {
 			if (!amount) continue;
 
 			const rotationMatrix = Mat6.createPlaneRotation(planeMappings.axis1, planeMappings.axis2, amount);
-			console.log(rotationMatrix);
 			this.orientationMatrix = this.orientationMatrix.multiply(rotationMatrix);
 		}
 		
