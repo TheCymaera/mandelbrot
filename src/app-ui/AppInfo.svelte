@@ -20,7 +20,7 @@
 
 
 	<p class="mb-6 opacity-80">
-		You may use this tool for commercial or non-commercial purposes. Attribution is appreciated but not required.
+		You may use this tool for both commercial or non-commercial purposes. Attribution is appreciated but not required.
 	</p>
 	
 	<!--<div class="mb-6">
