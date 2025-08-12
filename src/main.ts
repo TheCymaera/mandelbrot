@@ -4,12 +4,14 @@ import "./main.css";
 import { mount } from "svelte";
 import { Vec6 } from "./math/Vec6";
 import { Mat6 } from "./math/Mat6";
+import { Vec3 } from "./math/Vec3";
+import { Vec2 } from "./math/Vec2";
 
 // mount app
 const element = document.querySelector(".SvelteOutlet")!;
 mount(MyApp, { target: element });
 
-Object.assign(globalThis, { Vec6, Mat6 })
+Object.assign(globalThis, { Vec6, Mat6, Vec3, Vec2 })
 
 
 //const rot = Math.PI / 2;

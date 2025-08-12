@@ -1,8 +1,14 @@
-import { Mandelbrot6DState, InterpolatedMandelbrotState } from './MandelbrotState.svelte.js';
+import { Mandelbrot6DState } from './MandelbrotState.svelte.js';
 import vertexShader from '../shaders/screenQuad.vert?raw';
 import fragmentShader from '../shaders/mandelbrot.frag?raw';
-import vec6Shader from '../shaders/vec6.frag?raw';
+import vec6Shader from '../shaders/vec6.glsl?raw';
+import indicatorShader from '../shaders/indicators.glsl?raw';
 import type { Vec6 } from '../math/Vec6.js';
+
+const includes = {
+	"vec6.glsl": vec6Shader,
+	"indicators.glsl": indicatorShader
+};
 
 
 export class MandelbrotRenderer {
@@ -19,7 +25,9 @@ export class MandelbrotRenderer {
 		this.gl = canvas.getContext('webgl2')!;
 		if (!this.gl) throw new Error('WebGL2 not supported');
 
-		this.program = createProgram(this.gl, vertexShader, fragmentShader.replace(`#include_shader("vec6.frag");`, vec6Shader));
+		this.program = createProgram(this.gl, 
+				injectShaderIncludes(vertexShader), 
+				injectShaderIncludes(fragmentShader));
 		this.uniforms = this.getProgramUniforms(this.gl, this.program);
 
 		this.vao = setUpScreenQuadGeometry(this.gl, this.program);
@@ -45,7 +53,7 @@ export class MandelbrotRenderer {
 		this.gl.viewport(0, 0, width, height);
 	}
 	
-	render(state: Mandelbrot6DState | InterpolatedMandelbrotState): void {
+	render(state: Mandelbrot6DState): void {
 		// Clear
 		this.gl.clearColor(0, 0, 0, 1);
 		this.gl.clear(this.gl.COLOR_BUFFER_BIT);
@@ -60,10 +68,6 @@ export class MandelbrotRenderer {
 		};
 
 		// Set uniforms
-		const interpolation = state instanceof Mandelbrot6DState ?
-			InterpolatedMandelbrotState.MANDELBROT_INTERPOLATION :
-			state.lerp;
-
 		setVec6(this.uniforms.u_position, state.position);
 		setVec6(this.uniforms.u_upVector, state.upVector);
 		setVec6(this.uniforms.u_rightVector, state.rightVector);
@@ -72,15 +76,6 @@ export class MandelbrotRenderer {
 		this.gl.uniform1f(this.uniforms.u_eIndicatorSize, state.eIndicatorEffectiveSize);
 		this.gl.uniform1f(this.uniforms.u_zoom, state.zoomLevel);
 		this.gl.uniform2f(this.uniforms.u_screenSize, this.canvas.width, this.canvas.height);
-
-		this.gl.uniform3f(this.uniforms.u_interpolation, interpolation.x, interpolation.y, interpolation.z);
-
-		this.gl.uniform1f(this.uniforms.u_renderIndicatorRotation, state instanceof InterpolatedMandelbrotState ? 1 : 0);
-		if (state instanceof InterpolatedMandelbrotState) {
-			this.gl.uniform1f(this.uniforms.u_zIndicatorRotation, state.lerpRotation.y);
-			this.gl.uniform1f(this.uniforms.u_eIndicatorRotation, state.lerpRotation.x);
-		}
-
 
 		// Draw
 		this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
@@ -118,13 +113,21 @@ export class MandelbrotRenderer {
 			u_eIndicatorSize: requireUniform(gl, program, 'u_eIndicatorSize'),
 			u_zoom: requireUniform(gl, program, 'u_zoom'),
 			u_screenSize: requireUniform(gl, program, 'u_screenSize'),
-			u_interpolation: requireUniform(gl, program, 'u_interpolation'),
 
-			u_zIndicatorRotation: requireUniform(gl, program, 'u_zIndicatorRotation'),
-			u_eIndicatorRotation: requireUniform(gl, program, 'u_eIndicatorRotation'),
-			u_renderIndicatorRotation: requireUniform(gl, program, 'u_renderIndicatorRotation'),
+			//u_zIndicatorRotation: requireUniform(gl, program, 'u_zIndicatorRotation'),
+			//u_eIndicatorRotation: requireUniform(gl, program, 'u_eIndicatorRotation'),
+			//u_renderIndicatorRotation: requireUniform(gl, program, 'u_renderIndicatorRotation'),
 		} as const;
 	}
+}
+
+function injectShaderIncludes(shaderSource: string): string {
+	const includeRegex = /#include_shader\("([^"]+)"\);/g;
+	return shaderSource.replace(includeRegex, (_, identifier) => {
+		const contents = includes[identifier as keyof typeof includes];
+		if (!contents) throw new Error(`Failed to locate shader: ${identifier}`);
+		return contents;
+	});
 }
 
 function createShader(gl: WebGL2RenderingContext, type: number, source: string): WebGLShader {

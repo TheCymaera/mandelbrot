@@ -6,7 +6,7 @@
 <div class="bg-surfaceContainer text-onSurfaceContainer p-6 rounded-lg max-w-2xl mx-auto">
 	<h1 class="text-2xl font-bold mb-4">6D Mandelbrot Set Explorer</h1>
 	
-	<p class="mb-1 opacity-80">
+	<p class="mb-4 opacity-80">
 		Visualize the Mandelbrot set in 6D space.
 	</p>
 
@@ -16,6 +16,11 @@
 			target="_blank" 
 			class="text-primary-500 hover:underline"
 		>2swap</a>.
+	</p>
+
+
+	<p class="mb-6 opacity-80">
+		You may use this tool for commercial or non-commercial purposes. Attribution is appreciated but not required.
 	</p>
 	
 	<!--<div class="mb-6">

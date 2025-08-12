@@ -9,11 +9,7 @@ export interface InputScheme {
 	horizontalAxis: Vec6;
 	verticalAxis: Vec6;
 	rotationPlanes: PlaneMapping[];
-
 	zoomSpeed: number;
-	rotateSpeed: number;
-	velocityLerp: number;
-	rotationVelocityLerp: number;
 }
 
 export const mandelbrotToJuliaMappings: PlaneMapping[] = [
@@ -26,53 +22,28 @@ export const mandelbrotToExponentMappings: PlaneMapping[] = [
 	{ axis1: 1, axis2: 5 },
 ]
 
-export const juliaToMandelbrotMappings: PlaneMapping[] = [
-	{ axis1: 2, axis2: 0 },
-	{ axis1: 3, axis2: 1 },
-]
-
-export const exponentToMandelbrotMapping: PlaneMapping[] = [
-	{ axis1: 4, axis2: 0 },
-	{ axis1: 5, axis2: 1 },
-]
-
 export const juliaToExponentMappings: PlaneMapping[] = [
 	{ axis1: 2, axis2: 4 },
 	{ axis1: 3, axis2: 5 },
 ]
 
 export const regularInputScheme: InputScheme = {
-	horizontalAxis: new Vec6(1, 0, 0, 0, 0, 0).scale(.8),
-	verticalAxis: new Vec6(0, 1, 0, 0, 0, 0).scale(.8),
+	horizontalAxis: new Vec6(1, 0, 0, 0, 0, 0),
+	verticalAxis: new Vec6(0, 1, 0, 0, 0, 0),
 	rotationPlanes: [],
-	
-	velocityLerp: 3.5,
 	zoomSpeed: -2.0,
-
-	rotateSpeed: .2,
-	rotationVelocityLerp: 10,
 }
 
 export const juliaWiseInputScheme: InputScheme = {
-	horizontalAxis: new Vec6(0, 0, 1, 0, 0, 0).scale(.8),
-	verticalAxis: new Vec6(0, 0, 0, 1, 0, 0).scale(.8),
+	horizontalAxis: new Vec6(0, 0, 1, 0, 0, 0),
+	verticalAxis: new Vec6(0, 0, 0, 1, 0, 0),
 	rotationPlanes: mandelbrotToJuliaMappings,
-	
-	velocityLerp: 5,
 	zoomSpeed: 0,
-
-	rotateSpeed: .2,
-	rotationVelocityLerp: 10,
 }
 
 export const xWiseInputScheme: InputScheme = {
-	horizontalAxis: new Vec6(0, 0, 0, 0, 1, 0).scale(.8),
-	verticalAxis: new Vec6(0, 0, 0, 0, 0, 1).scale(.8),
+	horizontalAxis: new Vec6(0, 0, 0, 0, 1, 0),
+	verticalAxis: new Vec6(0, 0, 0, 0, 0, 1),
 	rotationPlanes: mandelbrotToExponentMappings,
-
-	velocityLerp: 5,
 	zoomSpeed: 0,
-
-	rotateSpeed: .2,
-	rotationVelocityLerp: 10,
 }
