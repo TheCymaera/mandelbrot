@@ -84,8 +84,15 @@
 	const jsonString = $derived.by(()=>{
 		return prettyPrintJson({
 			position: mandelbrot.position.toArray(),
-			orientationMatrix: mandelbrot.orientationMatrix.toArray(),
 			zoom: mandelbrot.zoom,
+			
+			orientationMatrix: mandelbrot.simplifiedRotation.active ? undefined :
+				mandelbrot.orientationMatrix.toArray(),
+			
+			simplifiedRotation: !mandelbrot.simplifiedRotation.active ? undefined : {
+				...mandelbrot.simplifiedRotation,
+				active: undefined,
+			}
 		});
 	});
 
@@ -102,10 +109,21 @@
 			}
 			
 			// Apply data
-			mandelbrot.simplifiedRotation.active = false;
-			mandelbrot.orientationMatrix = Mat6.fromMaybeArray(data.orientationMatrix);
 			mandelbrot.position = Vec6.fromMaybeArray(data.position);
 			mandelbrot.zoom = data.zoom ?? mandelbrot.zoom;
+
+			if (data.orientationMatrix) {
+				mandelbrot.simplifiedRotation.active = false;
+				mandelbrot.orientationMatrix = Mat6.fromMaybeArray(data.orientationMatrix);
+			}
+
+			if (data.simplifiedRotation) {
+				mandelbrot.simplifiedRotation = {
+					...data.simplifiedRotation,
+					active: true,
+				}
+			}
+
 			mandelbrot.clearVelocities();
 
 			jsonError = '';
@@ -152,12 +170,12 @@
 		return 'U';
 	}
 
-	function loadPreset(preset: Preset) {
-		mandelbrot.orientationMatrix = preset.orientationMatrix;
-		mandelbrot.position = preset.position;
-		mandelbrot.zoom = preset.zoom;
-		mandelbrot.clearVelocities();
-	}
+	//function loadPreset(preset: Preset) {
+	//	mandelbrot.orientationMatrix = preset.orientationMatrix;
+	//	mandelbrot.position = preset.position;
+	//	mandelbrot.zoom = preset.zoom;
+	//	mandelbrot.clearVelocities();
+	//}
 
 </script>
 <main class="w-full h-screen bg-background overflow-hidden relative flex">
