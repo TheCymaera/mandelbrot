@@ -60,13 +60,14 @@ export class Mandelbrot6DState {
 		if (!amount || mappings.length === 0) return;
 
 		// 6D rotation
+		const oldMat = this.orientationMatrix.clone();
 		for (const mapping of mappings) {
 			const { axis1, axis2 } = mapping;
 			const rotationMatrix = !local ?
 				Mat6.rotationFromAxisIndices(axis1, axis2, amount) :
 				Mat6.rotationFromAxes(
-					this.orientationMatrix.multiplyVec6(Vec6.fromIndex(axis1)),
-					this.orientationMatrix.multiplyVec6(Vec6.fromIndex(axis2)),
+					oldMat.multiplyVec6(Vec6.fromIndex(axis1)),
+					oldMat.multiplyVec6(Vec6.fromIndex(axis2)),
 					amount
 				)
 			this.orientationMatrix = rotationMatrix.multiply(this.orientationMatrix);

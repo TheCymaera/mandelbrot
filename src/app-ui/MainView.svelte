@@ -513,16 +513,18 @@
 		/>
 		<br>
 
-		<Button
-			className="px-5! p-2! rounded! mt-2"
-			onPress={() => {
-				mandelbrot6D.orientationMatrix = Mat6.identity();
-			}}
-		>
-			Reset Rotation
-		</Button>
-		<br>
-		<br>
+		{#if mandelbrot instanceof Mandelbrot6DState}
+			<Button
+				className="px-5! p-2! rounded! mt-2"
+				onPress={() => {
+					mandelbrot6D.orientationMatrix = Mat6.identity();
+				}}
+			>
+				Reset Rotation
+			</Button>
+			<br>
+			<br>
+		{/if}
 
 		{#if mandelbrot instanceof InterpolatedMandelbrotState}
 			{@const degToRad = (n: number) => n * (Math.PI / 180)}
