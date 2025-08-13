@@ -2,8 +2,8 @@ import { Vec2 } from '../math/Vec2.js';
 import { Vec6 } from '../math/Vec6.js';
 import { Mat6 } from '../math/Mat6.js';
 import { inputMap } from './inputMap.svelte.js';
-import { juliaToExponentMappings, juliaWiseInputScheme, mandelbrotToExponentMappings, mandelbrotToJuliaMappings, xWiseInputScheme, type InputScheme, type PlaneMapping } from './inputSchemes.js';
-import { mandelbrotPreset } from './orientationPresets.js';
+import { juliaToExponentMappings, juliaWiseInputScheme, mandelbrotToExponentMappings, mandelbrotToJuliaMappings, xWiseInputScheme, type InputScheme, type PlaneMapping } from './inputModes.js';
+import { mandelbrotPreset } from './presets.js';
 import { expLerpFactor, lerp } from '../math/utilities.js';
 import { Vec3 } from '../math/Vec3.js';
 
@@ -11,6 +11,12 @@ export enum IndicatorSetting {
 	Always,
 	Never,
 	WhenToolSelected,
+}
+
+export interface SimplifiedRotation {
+	juliaWise: number;
+	exponentWise: number;
+	juliaToExponentWise: number;
 }
 
 const MOVE_SPEED = .6;
@@ -48,8 +54,8 @@ export class Mandelbrot6DState {
 	moveOnLocalAxes = $state(true);
 	rotateOnLocalAxes = $state(false);
 
-	simplifiedRotation = $state({
-		active: true,
+	simplifiedRotationActive = $state(true);
+	simplifiedRotation: SimplifiedRotation = $state({
 		juliaWise: 0,
 		exponentWise: 0,
 		juliaToExponentWise: 0,
@@ -129,12 +135,12 @@ export class Mandelbrot6DState {
 		}
 		
 		// Calculate target velocity
-		const inputScheme = inputMap.scheme;
-		const horizontalAxis = quantizeToAxis(this.moveOnLocalAxes ? 
+		const inputScheme = inputMap.mode;
+		const horizontalAxis = snapToCardinalAxis(this.moveOnLocalAxes ? 
 			this.orientationMatrix.multiplyVec6(inputScheme.horizontalAxis) : 
 			inputScheme.horizontalAxis);
 		
-		const verticalAxis = quantizeToAxis(this.moveOnLocalAxes ? 
+		const verticalAxis = snapToCardinalAxis(this.moveOnLocalAxes ? 
 			this.orientationMatrix.multiplyVec6(inputScheme.verticalAxis) : 
 			inputScheme.verticalAxis);
 
@@ -175,25 +181,17 @@ export class Mandelbrot6DState {
 		}
 
 		// Update simplified rotation
-		if (this.simplifiedRotation.active) {
+		if (this.simplifiedRotationActive) {
 			this.simplifiedRotation.juliaWise = wrapAngle(this.simplifiedRotation.juliaWise);
 			this.simplifiedRotation.exponentWise = wrapAngle(this.simplifiedRotation.exponentWise);
 			this.simplifiedRotation.juliaToExponentWise = wrapAngle(this.simplifiedRotation.juliaToExponentWise);
-
-
-			this.orientationMatrix = Mat6.identity()
-				.multiply(Mat6.rotationFromAxisIndices(2, 4, this.simplifiedRotation.juliaToExponentWise))
-				.multiply(Mat6.rotationFromAxisIndices(3, 5, this.simplifiedRotation.juliaToExponentWise))
-				.multiply(Mat6.rotationFromAxisIndices(0, 4, this.simplifiedRotation.exponentWise))
-				.multiply(Mat6.rotationFromAxisIndices(1, 5, this.simplifiedRotation.exponentWise))
-				.multiply(Mat6.rotationFromAxisIndices(0, 2, this.simplifiedRotation.juliaWise))
-				.multiply(Mat6.rotationFromAxisIndices(1, 3, this.simplifiedRotation.juliaWise));
+			this.orientationMatrix = matrixFromSimplifiedRotation(this.simplifiedRotation);
 		}
 
 
 		// Update the right / up vectors
-		this.rightVector = quantizeToAxis(this.orientationMatrix.multiplyVec6(Mandelbrot6DState.RIGHT_VECTOR));
-		this.upVector = quantizeToAxis(this.orientationMatrix.multiplyVec6(Mandelbrot6DState.UP_VECTOR));
+		this.rightVector = snapToCardinalAxis(this.orientationMatrix.multiplyVec6(Mandelbrot6DState.RIGHT_VECTOR));
+		this.upVector = snapToCardinalAxis(this.orientationMatrix.multiplyVec6(Mandelbrot6DState.UP_VECTOR));
 	}
 
 	clearVelocities() {
@@ -205,8 +203,8 @@ export class Mandelbrot6DState {
 	#indicatorEffectiveSize(indicatorSize: number, setting: IndicatorSetting, tool: InputScheme): number {
 		if (setting === IndicatorSetting.Never) return 0;
 		if (setting === IndicatorSetting.WhenToolSelected && 
-			(inputMap.scheme.horizontalAxis !== tool.horizontalAxis &&
-			inputMap.scheme.verticalAxis !== tool.verticalAxis)) {
+			(inputMap.mode.horizontalAxis !== tool.horizontalAxis &&
+			inputMap.mode.verticalAxis !== tool.verticalAxis)) {
 			return 0;
 		}
 		return indicatorSize / this.zoomLevel;
@@ -218,8 +216,7 @@ function wrapAngle(angle: number): number {
 	return ((angle + Math.PI) % (2 * Math.PI)) - Math.PI;
 }
 
-function quantizeToAxis(vec: Vec6): Vec6 {
-	const threshold = 0.00001; // Tolerance for snapping to axes
+function snapToCardinalAxis(vec: Vec6, threshold = 0.00001): Vec6 {
 	const components = [vec.x, vec.y, vec.z, vec.w, vec.v, vec.u];
 	
 	// Find the component with the largest absolute value
@@ -251,4 +248,14 @@ function quantizeToAxis(vec: Vec6): Vec6 {
 	
 	// Otherwise, return the original vector
 	return vec;
+}
+
+function matrixFromSimplifiedRotation(simplifiedRotation: SimplifiedRotation): Mat6 {
+	return Mat6.identity()
+		.multiply(Mat6.rotationFromAxisIndices(2, 4, simplifiedRotation.juliaToExponentWise))
+		.multiply(Mat6.rotationFromAxisIndices(3, 5, simplifiedRotation.juliaToExponentWise))
+		.multiply(Mat6.rotationFromAxisIndices(0, 4, simplifiedRotation.exponentWise))
+		.multiply(Mat6.rotationFromAxisIndices(1, 5, simplifiedRotation.exponentWise))
+		.multiply(Mat6.rotationFromAxisIndices(0, 2, simplifiedRotation.juliaWise))
+		.multiply(Mat6.rotationFromAxisIndices(1, 3, simplifiedRotation.juliaWise));
 }

@@ -9,10 +9,9 @@
 	import { fa5_brands_github, fa5_solid_bars, fa5_solid_info, fa5_solid_times } from 'fontawesome-svgs';
 	import { Vec6 } from '../math/Vec6.js';
 	import { Mat6 } from '../math/Mat6.js';
-	import { juliaToExponentMappings, juliaWiseInputScheme, mandelbrotToExponentMappings, mandelbrotToJuliaMappings, regularInputScheme, xWiseInputScheme, type InputScheme, type PlaneMapping } from '../mandelbrot/inputSchemes.js';
+	import { juliaToExponentMappings, juliaWiseInputScheme, mandelbrotToExponentMappings, mandelbrotToJuliaMappings, regularInputScheme, xWiseInputScheme, type InputScheme, type PlaneMapping } from '../mandelbrot/inputModes.js';
 	import { deepEquals } from '../utilities/deepEquals.js';
 	import SelectField from '../ui-components/SelectField.svelte';
-	import { type Preset } from '../mandelbrot/orientationPresets.js';
 	import CheckboxField from '../ui-components/CheckboxField.svelte';
 	import { githubRepositoryLink } from './links.js';
 	
@@ -86,13 +85,11 @@
 			position: mandelbrot.position.toArray(),
 			zoom: mandelbrot.zoom,
 			
-			orientationMatrix: mandelbrot.simplifiedRotation.active ? undefined :
+			orientationMatrix: mandelbrot.simplifiedRotationActive ? undefined :
 				mandelbrot.orientationMatrix.toArray(),
 			
-			simplifiedRotation: !mandelbrot.simplifiedRotation.active ? undefined : {
-				...mandelbrot.simplifiedRotation,
-				active: undefined,
-			}
+			simplifiedRotation: !mandelbrot.simplifiedRotationActive ? undefined : 
+				mandelbrot.simplifiedRotation
 		});
 	});
 
@@ -113,15 +110,13 @@
 			mandelbrot.zoom = data.zoom ?? mandelbrot.zoom;
 
 			if (data.orientationMatrix) {
-				mandelbrot.simplifiedRotation.active = false;
+				mandelbrot.simplifiedRotationActive = false;
 				mandelbrot.orientationMatrix = Mat6.fromMaybeArray(data.orientationMatrix);
 			}
 
 			if (data.simplifiedRotation) {
-				mandelbrot.simplifiedRotation = {
-					...data.simplifiedRotation,
-					active: true,
-				}
+				mandelbrot.simplifiedRotationActive = true;
+				mandelbrot.simplifiedRotation = data.simplifiedRotation;
 			}
 
 			mandelbrot.clearVelocities();
@@ -161,14 +156,30 @@
 		{ name: "VU plane", rotation: [{ axis1: 4, axis2: 5 }] },
 	]
 
-	function getAxisName(axis: Vec6) {
-		if (axis.x > 0) return 'X';
-		if (axis.y > 0) return 'Y';
-		if (axis.z > 0) return 'Z';
-		if (axis.w > 0) return 'W';
-		if (axis.v > 0) return 'V';
-		return 'U';
+
+	function getAxisIndex(axis: Vec6) {
+		if (axis.x > 0) return 0;
+		if (axis.y > 0) return 1;
+		if (axis.z > 0) return 2;
+		if (axis.w > 0) return 3;
+		if (axis.v > 0) return 4;
+		return 5;
 	}
+
+
+	function getAxisNameFromIndex(index: number) {
+		return ["X", "Y", "Z", "W", "V"][index] ?? "U";
+	}
+
+	function getAxisName(vec: Vec6) {
+		return getAxisNameFromIndex(getAxisIndex(vec));
+	}
+
+
+	//const axes: { name: string, vector: Vec6 }[] = new Array(6).map((_, i) => {
+	//	const vector = Vec6.fromIndex(i)
+	//	return { name: getAxisName(vector), vector };
+	//});
 
 	//function loadPreset(preset: Preset) {
 	//	mandelbrot.orientationMatrix = preset.orientationMatrix;
@@ -235,9 +246,9 @@
 		<div class="grid grid-cols-3 gap-2 text-sm mb-4">
 			{#each [regularInputScheme, juliaWiseInputScheme, xWiseInputScheme] as type}
 				<Button 
-					onPress={() => inputMap.scheme = type}
+					onPress={() => inputMap.mode = type}
 					className="w-full p-2! rounded! "
-					variant={deepEquals(inputMap.scheme, type) ? 'filled' : 'outlined'}
+					variant={deepEquals(inputMap.mode, type) ? 'filled' : 'outlined'}
 				>
 					{getInputSchemeName(type)}
 				</Button>
@@ -257,7 +268,7 @@
 
 			<div class="flex items-center mb-1">
 				<div>
-					Move {mandelbrot.moveOnLocalAxes ? "Local " : ""}{getAxisName(inputMap.scheme.horizontalAxis)}
+					Move {mandelbrot.moveOnLocalAxes ? "Local " : ""}{getAxisName(inputMap.mode.horizontalAxis)}
 				</div>
 
 				{@render kbd("W")}
@@ -266,14 +277,14 @@
 
 			<div class="flex items-center mb-1">
 				<div>
-					Move {mandelbrot.moveOnLocalAxes ? "Local " : ""}{getAxisName(inputMap.scheme.verticalAxis)}
+					Move {mandelbrot.moveOnLocalAxes ? "Local " : ""}{getAxisName(inputMap.mode.verticalAxis)}
 				</div>
 				{@render kbd("A")}
 				{@render kbd("S")}
 			</div>
 
 			<div class="flex items-center mb-1">
-				{inputMap.scheme.zoomSpeed ? "Zoom In / Out" : "Rotate"}
+				{inputMap.mode.zoomSpeed ? "Zoom In / Out" : "Rotate"}
 
 				{@render kbd("Shift")}
 				{@render kbd("Space")}
@@ -291,27 +302,6 @@
 		</div>
 	</div>
 
-
-	<!-- Camera -->
-	<div class="mb-6">
-		<h3 class="text-lg font-semibold mb-2">Position</h3>
-		{@render vector({ vector: mandelbrot.position, readonly: false })}
-
-		<CheckboxField
-			label="Move on Local Axes"
-			className="mt-3 mb-3"
-			bind:checked={mandelbrot.moveOnLocalAxes}
-		/>
-
-		<h3 class="text-lg font-semibold mb-2">Zoom</h3>
-		<NumberField 
-			label="Zoom" 
-			bind:value={mandelbrot.zoom} 
-			hideLabel={true}
-			className="w-full"
-		/>
-	</div>
-
 	<!-- Controls -->
 	<div class="mb-6">
 		<h3 class="text-lg font-semibold mb-2">Controls</h3>
@@ -324,34 +314,91 @@
 				label="Spring"
 				bind:value={mandelbrot.springScale}
 			/>
+
+			<SelectField
+				label="Horizontal Axis"
+				bind:value={
+					()=>getAxisIndex(inputMap.mode.horizontalAxis),
+					(value)=>inputMap.mode.horizontalAxis = Vec6.fromIndex(value)
+				}
+				options={
+					new Array(6).fill(0).map((_, i) => ({
+						value: i,
+						label: getAxisNameFromIndex(i)
+					}))
+				}
+			/>
+
+			<SelectField
+				label="Vertical Axis"
+				bind:value={
+					()=>getAxisIndex(inputMap.mode.verticalAxis),
+					(value)=>inputMap.mode.verticalAxis = Vec6.fromIndex(value)
+				}
+				options={
+					new Array(6).fill(0).map((_, i) => ({
+						value: i,
+						label: getAxisNameFromIndex(i)
+					}))
+				}
+			/>
+
+			<CheckboxField
+				label="Move on Local Axes"
+				className="col-span-2"
+				bind:checked={mandelbrot.moveOnLocalAxes}
+			/>
+
+			<CheckboxField
+				label="Use Simplified Rotation"
+				className="col-span-2"
+				bind:checked={mandelbrot.simplifiedRotationActive}
+			/>
+
+			<SelectField
+				label="Rotational Plane"
+				className="col-span-2"
+				value={inputMap.mode.rotationPlanes}
+				options={
+					rotations
+					.filter(i => !mandelbrot.simplifiedRotationActive || i.isSimplified)
+					.map(r => ({ value: r.rotation, label: r.name }))
+				}
+				onChange={e => {
+					inputMap.mode.rotationPlanes = e.value;
+					inputMap.mode.zoomSpeed = e.value.length == 0 ? regularInputScheme.zoomSpeed : 0;
+					console.log(inputMap.mode.rotationPlanes, inputMap.mode.zoomSpeed);
+				}}
+			/>
+
+			{#if !mandelbrot.simplifiedRotationActive}
+				<CheckboxField
+					label="Rotate on Local Axes"
+					className="col-span-2"
+					bind:checked={mandelbrot.rotateOnLocalAxes}
+				/>
+			{/if}
 		</div>
 	</div>
 
+	<!-- Camera -->
+	<div class="mb-6">
+		<h3 class="text-lg font-semibold mb-2">Position</h3>
+		{@render vector({ vector: mandelbrot.position, readonly: false })}
+
+		<h3 class="text-lg font-semibold mb-2">Zoom</h3>
+		<NumberField 
+			label="Zoom" 
+			bind:value={mandelbrot.zoom} 
+			hideLabel={true}
+			className="w-full"
+		/>
+	</div>
+
+
 	<div class="mb-6">
 		<h3 class="text-lg font-semibold mb-2">Rotation</h3>
-		<CheckboxField
-			label="Use Simplified Rotation"
-			className="mb-3"
-			bind:checked={mandelbrot.simplifiedRotation.active}
-		/>
-
-		<SelectField
-			label="Rotational Plane"
-			className="mb-3"
-			value={inputMap.scheme.rotationPlanes}
-			options={
-				rotations
-				.filter(i => !mandelbrot.simplifiedRotation.active || i.isSimplified)
-				.map(r => ({ value: r.rotation, label: r.name }))
-			}
-			onChange={e => {
-				inputMap.scheme.rotationPlanes = e.value;
-				inputMap.scheme.zoomSpeed = e.value.length == 0 ? regularInputScheme.zoomSpeed : 0;
-				console.log(inputMap.scheme.rotationPlanes, inputMap.scheme.zoomSpeed);
-			}}
-		/>
-
-		{#if !mandelbrot.simplifiedRotation.active}
+		{#if !mandelbrot.simplifiedRotationActive}
 			<div class="col-span-2 grid grid-cols-[1fr_min-content] gap-2 items-end mb-3">
 				<NumberField 
 					label="Rotate By"
@@ -359,21 +406,14 @@
 				/>
 				<Button
 					className="w-20 p-2! rounded!"
-					disabled={inputMap.scheme.rotationPlanes.length === 0}
+					disabled={inputMap.mode.rotationPlanes.length === 0}
 					onPress={() => {
 						const inRadians = rotateBy * (Math.PI / 180);
-						mandelbrot.rotateByPlaneMappings(inputMap.scheme.rotationPlanes, inRadians)
+						mandelbrot.rotateByPlaneMappings(inputMap.mode.rotationPlanes, inRadians)
 					}}
 				>
 					Rotate
 				</Button>
-			</div>
-
-			<div class="col-span-2">
-				<CheckboxField
-					label="Rotate on Local Axes"
-					bind:checked={mandelbrot.rotateOnLocalAxes}
-				/>
 			</div>
 			
 			<Button
