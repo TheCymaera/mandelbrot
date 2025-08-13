@@ -19,11 +19,6 @@ export interface SimplifiedRotation {
 	juliaToExponentWise: number;
 }
 
-const MOVE_SPEED = .6;
-const ROTATE_SPEED = 0.2;
-const VELOCITY_LERP = 5;
-const ROTATIONAL_VELOCITY_LERP = 10;
-
 export class Mandelbrot6DState {
 	static readonly RIGHT_VECTOR = new Vec6(1, 0, 0, 0, 0, 0);
 	static readonly UP_VECTOR = new Vec6(0, 1, 0, 0, 0, 0);
@@ -147,14 +142,14 @@ export class Mandelbrot6DState {
 		const targetVelocity =
 			horizontalAxis.scale(moveDirection.x)
 			.add(verticalAxis.scale(moveDirection.y))
-			.scale(this.speedScale * MOVE_SPEED);
+			.scale(this.speedScale * inputMode.moveSpeed);
 
 		const targetZoomVelocity = secondaryMovement * inputMode.zoomSpeed * this.speedScale;
-		const targetRotationVelocity = secondaryMovement * ROTATE_SPEED * this.speedScale;
+		const targetRotationVelocity = secondaryMovement * inputMode.rotateSpeed * this.speedScale;
 
 		// Accelerate towards target velocity
-		const velocityLerp = expLerpFactor(VELOCITY_LERP / this.springScale, deltaTime);
-		const rotationVelocityLerp = expLerpFactor(ROTATIONAL_VELOCITY_LERP / this.springScale, deltaTime);
+		const velocityLerp = expLerpFactor(inputMode.velocityLerp / this.springScale, deltaTime);
+		const rotationVelocityLerp = expLerpFactor(inputMode.rotationalVelocityLerp / this.springScale, deltaTime);
 		this.velocity = this.velocity.mix(targetVelocity, velocityLerp);
 		this.zoomVelocity = lerp(this.zoomVelocity, targetZoomVelocity, velocityLerp);
 		this.rotationVelocity = lerp(this.rotationVelocity, targetRotationVelocity, rotationVelocityLerp);
