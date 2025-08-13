@@ -1,7 +1,7 @@
-import { juliaWiseInputScheme, regularInputScheme, xWiseInputScheme, type InputScheme as InputMode } from './inputModes';
+import { juliaWiseInputMode, regularInputMode, xWiseInputMode, type InputMode as InputMode } from './inputModes';
 
 export const inputMap = new class InputMap {
-	mode: InputMode = $state({...regularInputScheme});
+	mode: InputMode = $state({...regularInputMode});
 
 	get isMovingLeft(): boolean {
 		return this.#keys.has('KeyA') || this.#keys.has('ArrowLeft');
@@ -40,9 +40,9 @@ export const inputMap = new class InputMap {
 			this.#keys.add(e.code);
 
 			const movementModes: Record<string, InputMode> = {
-				'Digit1': regularInputScheme,
-				'Digit2': juliaWiseInputScheme,
-				'Digit3': xWiseInputScheme,
+				'Digit1': regularInputMode,
+				'Digit2': juliaWiseInputMode,
+				'Digit3': xWiseInputMode,
 			};
 
 			const mode = movementModes[e.code];

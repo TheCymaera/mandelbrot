@@ -2,7 +2,7 @@ import { Vec2 } from '../math/Vec2.js';
 import { Vec6 } from '../math/Vec6.js';
 import { Mat6 } from '../math/Mat6.js';
 import { inputMap } from './inputMap.svelte.js';
-import { juliaToExponentMappings, juliaWiseInputScheme, mandelbrotToExponentMappings, mandelbrotToJuliaMappings, xWiseInputScheme, type InputScheme, type PlaneMapping } from './inputModes.js';
+import { juliaToExponentMappings, juliaWiseInputMode, mandelbrotToExponentMappings, mandelbrotToJuliaMappings, xWiseInputMode, type InputMode, type PlaneMapping } from './inputModes.js';
 import { mandelbrotPreset } from './presets.js';
 import { expLerpFactor, lerp } from '../math/utilities.js';
 import { Vec3 } from '../math/Vec3.js';
@@ -64,11 +64,11 @@ export class Mandelbrot6DState {
 	private lastTime = 0;
 
 	get zIndicatorEffectiveSize() {
-		return this.#indicatorEffectiveSize(this.zIndicatorSize, this.zIndicatorSetting, juliaWiseInputScheme);
+		return this.#indicatorEffectiveSize(this.zIndicatorSize, this.zIndicatorSetting, juliaWiseInputMode);
 	}
 
 	get eIndicatorEffectiveSize() {
-		return this.#indicatorEffectiveSize(this.eIndicatorSize, this.eIndicatorSetting, xWiseInputScheme);
+		return this.#indicatorEffectiveSize(this.eIndicatorSize, this.eIndicatorSetting, xWiseInputMode);
 	}
 
 	/**
@@ -135,21 +135,21 @@ export class Mandelbrot6DState {
 		}
 		
 		// Calculate target velocity
-		const inputScheme = inputMap.mode;
+		const inputMode = inputMap.mode;
 		const horizontalAxis = snapToCardinalAxis(this.moveOnLocalAxes ? 
-			this.orientationMatrix.multiplyVec6(inputScheme.horizontalAxis) : 
-			inputScheme.horizontalAxis);
+			this.orientationMatrix.multiplyVec6(inputMode.horizontalAxis) : 
+			inputMode.horizontalAxis);
 		
 		const verticalAxis = snapToCardinalAxis(this.moveOnLocalAxes ? 
-			this.orientationMatrix.multiplyVec6(inputScheme.verticalAxis) : 
-			inputScheme.verticalAxis);
+			this.orientationMatrix.multiplyVec6(inputMode.verticalAxis) : 
+			inputMode.verticalAxis);
 
 		const targetVelocity =
 			horizontalAxis.scale(moveDirection.x)
 			.add(verticalAxis.scale(moveDirection.y))
 			.scale(this.speedScale * MOVE_SPEED);
 
-		const targetZoomVelocity = secondaryMovement * inputScheme.zoomSpeed * this.speedScale;
+		const targetZoomVelocity = secondaryMovement * inputMode.zoomSpeed * this.speedScale;
 		const targetRotationVelocity = secondaryMovement * ROTATE_SPEED * this.speedScale;
 
 		// Accelerate towards target velocity
@@ -166,7 +166,7 @@ export class Mandelbrot6DState {
 		const scaledVelocity = this.velocity.scale(deltaTime / this.zoomLevel);
 		this.position = this.position.add(scaledVelocity);
 
-		this.rotateByPlaneMappings(inputScheme.rotationPlanes, this.rotationVelocity * deltaTime, this.rotateOnLocalAxes);
+		this.rotateByPlaneMappings(inputMode.rotationPlanes, this.rotationVelocity * deltaTime, this.rotateOnLocalAxes);
 
 		// Zero velocities if small to prevent constant UI updates
 		const margin = 0.02;
@@ -200,7 +200,7 @@ export class Mandelbrot6DState {
 		this.rotationVelocity = 0;
 	}
 
-	#indicatorEffectiveSize(indicatorSize: number, setting: IndicatorSetting, tool: InputScheme): number {
+	#indicatorEffectiveSize(indicatorSize: number, setting: IndicatorSetting, tool: InputMode): number {
 		if (setting === IndicatorSetting.Never) return 0;
 		if (setting === IndicatorSetting.WhenToolSelected && 
 			(inputMap.mode.horizontalAxis !== tool.horizontalAxis &&

@@ -5,7 +5,7 @@ export interface PlaneMapping {
 	axis2: number;
 }
 
-export interface InputScheme {
+export interface InputMode {
 	horizontalAxis: Vec6;
 	verticalAxis: Vec6;
 	rotationPlanes: PlaneMapping[];
@@ -27,21 +27,21 @@ export const juliaToExponentMappings: PlaneMapping[] = [
 	{ axis1: 3, axis2: 5 },
 ]
 
-export const regularInputScheme: InputScheme = {
+export const regularInputMode: InputMode = {
 	horizontalAxis: new Vec6(1, 0, 0, 0, 0, 0),
 	verticalAxis: new Vec6(0, 1, 0, 0, 0, 0),
 	rotationPlanes: [],
 	zoomSpeed: -2.0,
 }
 
-export const juliaWiseInputScheme: InputScheme = {
+export const juliaWiseInputMode: InputMode = {
 	horizontalAxis: new Vec6(0, 0, 1, 0, 0, 0),
 	verticalAxis: new Vec6(0, 0, 0, 1, 0, 0),
 	rotationPlanes: mandelbrotToJuliaMappings,
 	zoomSpeed: 0,
 }
 
-export const xWiseInputScheme: InputScheme = {
+export const xWiseInputMode: InputMode = {
 	horizontalAxis: new Vec6(0, 0, 0, 0, 1, 0),
 	verticalAxis: new Vec6(0, 0, 0, 0, 0, 1),
 	rotationPlanes: mandelbrotToExponentMappings,

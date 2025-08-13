@@ -9,7 +9,7 @@
 	import { fa5_brands_github, fa5_solid_bars, fa5_solid_info, fa5_solid_times } from 'fontawesome-svgs';
 	import { Vec6 } from '../math/Vec6.js';
 	import { Mat6 } from '../math/Mat6.js';
-	import { juliaToExponentMappings, juliaWiseInputScheme, mandelbrotToExponentMappings, mandelbrotToJuliaMappings, regularInputScheme, xWiseInputScheme, type InputScheme, type PlaneMapping } from '../mandelbrot/inputModes.js';
+	import { juliaToExponentMappings, juliaWiseInputMode, mandelbrotToExponentMappings, mandelbrotToJuliaMappings, regularInputMode, xWiseInputMode, type InputMode, type PlaneMapping } from '../mandelbrot/inputModes.js';
 	import { deepEquals } from '../utilities/deepEquals.js';
 	import SelectField from '../ui-components/SelectField.svelte';
 	import CheckboxField from '../ui-components/CheckboxField.svelte';
@@ -24,7 +24,6 @@
 
 	// Sidebar state
 	let sidebarOpen = $state(true);
-	const sidebarWidth = 400;
 
 	onMount(() => {
 		// Create renderer
@@ -127,15 +126,15 @@
 		}
 	}
 
-	function getInputSchemeName(type: InputScheme): string {
-		if (type === regularInputScheme) return 'Classic';
-		if (type === juliaWiseInputScheme) return 'Julia Plane';
-		if (type === xWiseInputScheme) return 'X Plane';
+	function getInputModeName(type: InputMode): string {
+		if (type === regularInputMode) return 'Classic';
+		if (type === juliaWiseInputMode) return 'Julia Plane';
+		if (type === xWiseInputMode) return 'X Plane';
 		return 'Custom';
 	}
 
 	const rotations: {name: string, rotation: PlaneMapping[], isSimplified?: boolean }[] = [
-		{ name: "None (Zoom)", rotation: regularInputScheme.rotationPlanes, isSimplified: true },
+		{ name: "None (Zoom)", rotation: regularInputMode.rotationPlanes, isSimplified: true },
 		{ name: "Mandelbrot to Julia", rotation: mandelbrotToJuliaMappings, isSimplified: true },
 		{ name: "Mandelbrot to Exponent", rotation: mandelbrotToExponentMappings, isSimplified: true },
 		{ name: "Julia to Exponent", rotation: juliaToExponentMappings, isSimplified: true },
@@ -189,13 +188,23 @@
 	//}
 
 </script>
-<main class="w-full h-screen bg-background overflow-hidden relative flex">
-	<!-- Canvas container that adjusts to sidebar -->
-	<div class="relative flex-1 transition-all duration-300" style="margin-left: {sidebarOpen ? sidebarWidth + 'px' : '0px'}">
+<main 
+	style:--sidebar-width="400px"
+	style:--sidebar-height="50%"
+	class="inset-0 bg-background overflow-hidden relative"
+>
+	<div class="
+		absolute transition-all duration-300
+		inset-0
+		{sidebarOpen ? `
+			bottom-[var(--sidebar-height)] md:bottom-0
+			md:left-[var(--sidebar-width)]
+		` : ""}
+	">
 		<div class="
 			absolute top-0 left-0 flex flex-col gap-4 p-4
 			w-min h-full
-			opacity-0 hover:opacity-100 transition-opacity delay-50 duration-500
+			md:opacity-0 hover:opacity-100 transition-opacity delay-50 duration-500
 		">
 			<CircleButton 
 				onPress={()=>(sidebarOpen = !sidebarOpen)}
@@ -223,9 +232,16 @@
 	
 	<!-- Collapsible sidebar -->
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<div class="absolute top-0 left-0 h-full bg-surface transition-transform duration-300 overflow-y-auto
-		{sidebarOpen ? 'translate-x-0' : '-translate-x-full'}"
-		style="width: {sidebarWidth}px;"
+	<div 
+		class="
+			absolute bottom-0 left-0 bg-surface transition-transform duration-300 overflow-y-auto
+			w-full h-[var(--sidebar-height)]
+			md:w-[var(--sidebar-width)] md:h-full
+			{sidebarOpen ? 
+				`translate-x-0 translate-y-0` : 
+				'translate-y-full md:translate-y-0 md:-translate-x-full'
+			}
+		"
 		onkeydown={(e)=>{
 			if (e.code === "Space" || e.code === "Shift") {
 				e.preventDefault();
@@ -239,18 +255,18 @@
 </main>
 
 {#snippet sidebarMain()}
-	<!-- Input Scheme -->
+	<!-- Input Mode -->
 	<div class="mb-6">
-		<h3 class="text-lg font-semibold mb-2">Input Scheme</h3>
+		<h3 class="text-lg font-semibold mb-2">Input Mode</h3>
 		
 		<div class="grid grid-cols-3 gap-2 text-sm mb-4">
-			{#each [regularInputScheme, juliaWiseInputScheme, xWiseInputScheme] as type}
+			{#each [regularInputMode, juliaWiseInputMode, xWiseInputMode] as type}
 				<Button 
 					onPress={() => inputMap.mode = type}
 					className="w-full p-2! rounded! "
 					variant={deepEquals(inputMap.mode, type) ? 'filled' : 'outlined'}
 				>
-					{getInputSchemeName(type)}
+					{getInputModeName(type)}
 				</Button>
 			{/each}
 		</div>
@@ -366,7 +382,7 @@
 				}
 				onChange={e => {
 					inputMap.mode.rotationPlanes = e.value;
-					inputMap.mode.zoomSpeed = e.value.length == 0 ? regularInputScheme.zoomSpeed : 0;
+					inputMap.mode.zoomSpeed = e.value.length == 0 ? regularInputMode.zoomSpeed : 0;
 					console.log(inputMap.mode.rotationPlanes, inputMap.mode.zoomSpeed);
 				}}
 			/>
