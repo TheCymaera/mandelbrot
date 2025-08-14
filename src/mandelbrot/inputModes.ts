@@ -17,18 +17,18 @@ export interface InputMode {
 }
 
 export const mandelbrotToJuliaMappings: PlaneMapping[] = [
-	{ axis1: 0, axis2: 2 },
-	{ axis1: 1, axis2: 3 },
+	{ axis1: Vec6.X_INDEX, axis2: Vec6.Z_INDEX },
+	{ axis1: Vec6.Y_INDEX, axis2: Vec6.W_INDEX },
 ]
 
 export const mandelbrotToExponentMappings: PlaneMapping[] = [
-	{ axis1: 0, axis2: 4 },
-	{ axis1: 1, axis2: 5 },
+	{ axis1: Vec6.X_INDEX, axis2: Vec6.V_INDEX },
+	{ axis1: Vec6.Y_INDEX, axis2: Vec6.U_INDEX },
 ]
 
 export const juliaToExponentMappings: PlaneMapping[] = [
-	{ axis1: 2, axis2: 4 },
-	{ axis1: 3, axis2: 5 },
+	{ axis1: Vec6.Z_INDEX, axis2: Vec6.V_INDEX },
+	{ axis1: Vec6.W_INDEX, axis2: Vec6.U_INDEX },
 ]
 
 const rotateSpeed = 0.2;

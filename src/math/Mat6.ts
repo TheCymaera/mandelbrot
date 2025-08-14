@@ -1,8 +1,5 @@
 import { Vec6 } from './Vec6.js';
 
-/**
- * 6x6 matrix for 6D transformations and rotations
- */
 export class Mat6 {
 	// Store as column-major order (like OpenGL)
 	private m: Float64Array;
@@ -95,12 +92,6 @@ export class Mat6 {
 		return result;
 	}
 
-	/**
-	 * Create a rotation matrix in a 2D plane
-	 * @param axis1 First axis index (0-5)
-	 * @param axis2 Second axis index (0-5)
-	 * @param angle Rotation angle in radians
-	 */
 	static rotationFromAxisIndices(axis1: number, axis2: number, angle: number): Mat6 {
 		const matrix = new Mat6();
 		const cos = Math.cos(angle);
@@ -122,14 +113,6 @@ export class Mat6 {
 		)
 	}
 
-
-	/**
-	 * Create a rotation matrix around a plane defined by two Vec6 axes
-	 * The vectors will be orthogonalized using Gram-Schmidt process
-	 * @param axis1 First axis vector (will be normalized)
-	 * @param axis2 Second axis vector (will be orthogonalized to axis1 and normalized)
-	 * @param angle Rotation angle in radians
-	 */
 	static rotationFromAxes(axis1: Vec6, axis2: Vec6, angle: number): Mat6 {
 		// Normalize the first axis
 		const u1 = axis1.normalize();

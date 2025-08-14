@@ -5,7 +5,6 @@ import { inputMap } from './inputMap.svelte.js';
 import { juliaToExponentMappings, juliaWiseInputMode, mandelbrotToExponentMappings, mandelbrotToJuliaMappings, xWiseInputMode, type InputMode, type PlaneMapping } from './inputModes.js';
 import { mandelbrotPreset } from './presets.js';
 import { expLerpFactor, lerp } from '../math/utilities.js';
-import { Vec3 } from '../math/Vec3.js';
 
 export enum IndicatorSetting {
 	Always,

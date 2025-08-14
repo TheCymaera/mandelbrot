@@ -138,31 +138,31 @@
 		{ name: "Mandelbrot to Julia", rotation: mandelbrotToJuliaMappings, isSimplified: true },
 		{ name: "Mandelbrot to Exponent", rotation: mandelbrotToExponentMappings, isSimplified: true },
 		{ name: "Julia to Exponent", rotation: juliaToExponentMappings, isSimplified: true },
-		{ name: "XY plane", rotation: [{ axis1: 0, axis2: 1 }] },
-		{ name: "XZ plane", rotation: [{ axis1: 0, axis2: 2 }] },
-		{ name: "XW plane", rotation: [{ axis1: 0, axis2: 3 }] },
-		{ name: "XV plane", rotation: [{ axis1: 0, axis2: 4 }] },
-		{ name: "XU plane", rotation: [{ axis1: 0, axis2: 5 }] },
-		{ name: "YZ plane", rotation: [{ axis1: 1, axis2: 2 }] },
-		{ name: "YW plane", rotation: [{ axis1: 1, axis2: 3 }] },
-		{ name: "YV plane", rotation: [{ axis1: 1, axis2: 4 }] },
-		{ name: "YU plane", rotation: [{ axis1: 1, axis2: 5 }] },
-		{ name: "ZW plane", rotation: [{ axis1: 2, axis2: 3 }] },
-		{ name: "ZV plane", rotation: [{ axis1: 2, axis2: 4 }] },
-		{ name: "ZU plane", rotation: [{ axis1: 2, axis2: 5 }] },
-		{ name: "WV plane", rotation: [{ axis1: 3, axis2: 4 }] },
-		{ name: "WU plane", rotation: [{ axis1: 3, axis2: 5 }] },
-		{ name: "VU plane", rotation: [{ axis1: 4, axis2: 5 }] },
+		{ name: "XY plane", rotation: [{ axis1: Vec6.X_INDEX, axis2: Vec6.Y_INDEX }] },
+		{ name: "XZ plane", rotation: [{ axis1: Vec6.X_INDEX, axis2: Vec6.Z_INDEX }] },
+		{ name: "XW plane", rotation: [{ axis1: Vec6.X_INDEX, axis2: Vec6.W_INDEX }] },
+		{ name: "XV plane", rotation: [{ axis1: Vec6.X_INDEX, axis2: Vec6.V_INDEX }] },
+		{ name: "XU plane", rotation: [{ axis1: Vec6.X_INDEX, axis2: Vec6.U_INDEX }] },
+		{ name: "YZ plane", rotation: [{ axis1: Vec6.Y_INDEX, axis2: Vec6.Z_INDEX }] },
+		{ name: "YW plane", rotation: [{ axis1: Vec6.Y_INDEX, axis2: Vec6.W_INDEX }] },
+		{ name: "YV plane", rotation: [{ axis1: Vec6.Y_INDEX, axis2: Vec6.V_INDEX }] },
+		{ name: "YU plane", rotation: [{ axis1: Vec6.Y_INDEX, axis2: Vec6.U_INDEX }] },
+		{ name: "ZW plane", rotation: [{ axis1: Vec6.Z_INDEX, axis2: Vec6.W_INDEX }] },
+		{ name: "ZV plane", rotation: [{ axis1: Vec6.Z_INDEX, axis2: Vec6.V_INDEX }] },
+		{ name: "ZU plane", rotation: [{ axis1: Vec6.Z_INDEX, axis2: Vec6.U_INDEX }] },
+		{ name: "WV plane", rotation: [{ axis1: Vec6.W_INDEX, axis2: Vec6.V_INDEX }] },
+		{ name: "WU plane", rotation: [{ axis1: Vec6.W_INDEX, axis2: Vec6.U_INDEX }] },
+		{ name: "VU plane", rotation: [{ axis1: Vec6.V_INDEX, axis2: Vec6.U_INDEX }] },
 	]
 
 
 	function getAxisIndex(axis: Vec6) {
-		if (axis.x > 0) return 0;
-		if (axis.y > 0) return 1;
-		if (axis.z > 0) return 2;
-		if (axis.w > 0) return 3;
-		if (axis.v > 0) return 4;
-		return 5;
+		if (axis.x > 0) return Vec6.X_INDEX;
+		if (axis.y > 0) return Vec6.Y_INDEX;
+		if (axis.z > 0) return Vec6.Z_INDEX;
+		if (axis.w > 0) return Vec6.W_INDEX;
+		if (axis.v > 0) return Vec6.V_INDEX;
+		return Vec6.U_INDEX;
 	}
 
 
@@ -173,20 +173,6 @@
 	function getAxisName(vec: Vec6) {
 		return getAxisNameFromIndex(getAxisIndex(vec));
 	}
-
-
-	//const axes: { name: string, vector: Vec6 }[] = new Array(6).map((_, i) => {
-	//	const vector = Vec6.fromIndex(i)
-	//	return { name: getAxisName(vector), vector };
-	//});
-
-	//function loadPreset(preset: Preset) {
-	//	mandelbrot.orientationMatrix = preset.orientationMatrix;
-	//	mandelbrot.position = preset.position;
-	//	mandelbrot.zoom = preset.zoom;
-	//	mandelbrot.clearVelocities();
-	//}
-
 </script>
 <main 
 	style:--sidebar-width="400px"
