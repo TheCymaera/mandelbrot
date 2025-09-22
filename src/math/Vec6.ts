@@ -117,4 +117,11 @@ export class Vec6 {
 	static W(): Vec6 { return new Vec6(0, 0, 0, 1, 0, 0); }
 	static V(): Vec6 { return new Vec6(0, 0, 0, 0, 1, 0); }
 	static U(): Vec6 { return new Vec6(0, 0, 0, 0, 0, 1); }
+
+	static NEG_X(): Vec6 { return new Vec6(-1, 0, 0, 0, 0, 0); }
+	static NEG_Y(): Vec6 { return new Vec6(0, -1, 0, 0, 0, 0); }
+	static NEG_Z(): Vec6 { return new Vec6(0, 0, -1, 0, 0, 0); }
+	static NEG_W(): Vec6 { return new Vec6(0, 0, 0, -1, 0, 0); }
+	static NEG_V(): Vec6 { return new Vec6(0, 0, 0, 0, -1, 0); }
+	static NEG_U(): Vec6 { return new Vec6(0, 0, 0, 0, 0, -1); }
 }

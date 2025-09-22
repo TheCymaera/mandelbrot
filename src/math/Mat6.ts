@@ -106,10 +106,10 @@ export class Mat6 {
 		return matrix;
 	}
 
-	static createPlaneMapping(fromAxis1: number, fromAxis2: number, toAxis1: number, toAxis2: number): Mat6 {
+	static createPlaneMapping(fromAxis1: number, fromAxis2: number, toAxis1: number, toAxis2: number, rotation = Math.PI / 2): Mat6 {
 		return (
-			Mat6.rotationFromAxisIndices(fromAxis1, toAxis1, Math.PI / 2)
-			.multiply(Mat6.rotationFromAxisIndices(fromAxis2, toAxis2, Math.PI / 2))
+			Mat6.rotationFromAxisIndices(fromAxis1, toAxis1, rotation)
+			.multiply(Mat6.rotationFromAxisIndices(fromAxis2, toAxis2, rotation))
 		)
 	}
 

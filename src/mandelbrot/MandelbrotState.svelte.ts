@@ -147,11 +147,11 @@ export class Mandelbrot6DState {
 		
 		// Calculate target velocity
 		const inputMode = inputMap.mode;
-		const horizontalAxis = snapToCardinalAxis(this.moveOnLocalAxes ? 
+		const horizontalAxis = snapToCardinalDirection(this.moveOnLocalAxes ? 
 			this.orientationMatrix.multiplyVec6(inputMode.horizontalAxis) : 
 			inputMode.horizontalAxis);
 		
-		const verticalAxis = snapToCardinalAxis(this.moveOnLocalAxes ? 
+		const verticalAxis = snapToCardinalDirection(this.moveOnLocalAxes ? 
 			this.orientationMatrix.multiplyVec6(inputMode.verticalAxis) : 
 			inputMode.verticalAxis);
 
@@ -201,8 +201,8 @@ export class Mandelbrot6DState {
 
 
 		// Update the right / up vectors
-		this.rightVector = snapToCardinalAxis(this.orientationMatrix.multiplyVec6(Mandelbrot6DState.RIGHT_VECTOR));
-		this.upVector = snapToCardinalAxis(this.orientationMatrix.multiplyVec6(Mandelbrot6DState.UP_VECTOR));
+		this.rightVector = snapToCardinalDirection(this.orientationMatrix.multiplyVec6(Mandelbrot6DState.RIGHT_VECTOR));
+		this.upVector = snapToCardinalDirection(this.orientationMatrix.multiplyVec6(Mandelbrot6DState.UP_VECTOR));
 	}
 
 	clearVelocities() {
@@ -227,46 +227,39 @@ function wrapAngle(angle: number): number {
 	return ((angle + Math.PI) % (2 * Math.PI)) - Math.PI;
 }
 
-function snapToCardinalAxis(vec: Vec6, threshold = 0.00001): Vec6 {
-	const components = [vec.x, vec.y, vec.z, vec.w, vec.v, vec.u];
-	
-	// Find the component with the largest absolute value
-	let maxIndex = 0;
-	let maxValue = Math.abs(components[0]!);
-	
-	for (let i = 1; i < components.length; i++) {
-		const absValue = Math.abs(components[i]!);
-		if (absValue > maxValue) {
-			maxValue = absValue;
-			maxIndex = i;
-		}
-	}
-	
-	// Check if the vector is close to a single axis
-	let isCloseToAxis = true;
-	for (let i = 0; i < components.length; i++) {
-		if (i !== maxIndex && Math.abs(components[i]!) > threshold) {
-			isCloseToAxis = false;
-			break;
-		}
-	}
-	
-	// If close to an axis, snap to the nearest unit axis vector
-	if (isCloseToAxis && maxValue > threshold) {
-		const sign = Math.sign(components[maxIndex]!);
-		return Vec6.fromIndex(maxIndex).scale(sign);
-	}
-	
-	// Otherwise, return the original vector
+function snapToCardinalDirection(vec: Vec6, threshold = 0.000001): Vec6 {
+	if (vec.x > 1 - threshold) return Vec6.X();
+	if (vec.x < -1 + threshold) return Vec6.NEG_X();
+	if (vec.y > 1 - threshold) return Vec6.Y();
+	if (vec.y < -1 + threshold) return Vec6.NEG_Y();
+	if (vec.z > 1 - threshold) return Vec6.Z();
+	if (vec.z < -1 + threshold) return Vec6.NEG_Z();
+	if (vec.w > 1 - threshold) return Vec6.W();
+	if (vec.w < -1 + threshold) return Vec6.NEG_W();
+	if (vec.v > 1 - threshold) return Vec6.V();
+	if (vec.v < -1 + threshold) return Vec6.NEG_V();
+	if (vec.u > 1 - threshold) return Vec6.U();
+	if (vec.u < -1 + threshold) return Vec6.NEG_U();
 	return vec;
 }
 
+
+let memoizedMatrix: { simplifiedRotation: SimplifiedRotation; matrix: Mat6 } | undefined = undefined;
 function matrixFromSimplifiedRotation(simplifiedRotation: SimplifiedRotation): Mat6 {
-	return Mat6.identity()
-		.multiply(Mat6.rotationFromAxisIndices(2, 4, simplifiedRotation.juliaToExponentWise))
-		.multiply(Mat6.rotationFromAxisIndices(3, 5, simplifiedRotation.juliaToExponentWise))
-		.multiply(Mat6.rotationFromAxisIndices(0, 4, simplifiedRotation.exponentWise))
-		.multiply(Mat6.rotationFromAxisIndices(1, 5, simplifiedRotation.exponentWise))
-		.multiply(Mat6.rotationFromAxisIndices(0, 2, simplifiedRotation.juliaWise))
-		.multiply(Mat6.rotationFromAxisIndices(1, 3, simplifiedRotation.juliaWise));
+	if (memoizedMatrix && simplifiedRotationEquals(memoizedMatrix.simplifiedRotation, simplifiedRotation)) {
+		return memoizedMatrix.matrix;
+	}
+
+	const matrix = Mat6.createPlaneMapping(Vec6.Z_INDEX, Vec6.W_INDEX, Vec6.V_INDEX, Vec6.U_INDEX, simplifiedRotation.juliaToExponentWise)
+		.multiply(Mat6.createPlaneMapping(Vec6.X_INDEX, Vec6.Y_INDEX, Vec6.V_INDEX, Vec6.U_INDEX, simplifiedRotation.exponentWise))
+		.multiply(Mat6.createPlaneMapping(Vec6.X_INDEX, Vec6.Y_INDEX, Vec6.Z_INDEX, Vec6.W_INDEX, simplifiedRotation.juliaWise))
+
+	memoizedMatrix = { simplifiedRotation: { ...simplifiedRotation }, matrix };
+	return matrix;
+}
+
+function simplifiedRotationEquals(a: SimplifiedRotation, b: SimplifiedRotation): boolean {
+	return a.juliaWise === b.juliaWise &&
+		a.exponentWise === b.exponentWise &&
+		a.juliaToExponentWise === b.juliaToExponentWise;
 }

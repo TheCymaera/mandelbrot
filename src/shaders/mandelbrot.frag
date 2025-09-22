@@ -94,7 +94,6 @@ void main() {
 	vec2 c = vec2(pixelPosition.x, pixelPosition.y);
 	vec2 e = vec2(pixelPosition.v, pixelPosition.u);
 
-
 	// Render indicators
 	vec4 CYAN = vec4(0.0, .8, .8, 1.0);
 	vec4 RED = vec4(1.0, 0.0, 0.0, 1.0);
