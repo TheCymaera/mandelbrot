@@ -45,9 +45,9 @@ export class Mandelbrot6DState {
 
 	// Iteration controls
 	iterationsBase = $state(100);
-	iterationsPerZoom = $state(100);
+	iterationsPerZoom = $state(50);
 	iterationsMin = $state(100);
-	iterationsMax = $state(10000);
+	iterationsMax = $state(5000);
 	escapeRadius = $state(Infinity);
 
 	orientationMatrix = Mat6.identity().set(mandelbrotPreset.orientationMatrix);
