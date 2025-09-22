@@ -46,7 +46,7 @@ export class Mandelbrot6DState {
 	// Iteration controls
 	iterationsBase = $state(100);
 	iterationsPerZoom = $state(50);
-	iterationsMin = $state(50);
+	iterationsMin = $state(75);
 	iterationsMax = $state(10000);
 	escapeRadius = $state(2.0);
 
