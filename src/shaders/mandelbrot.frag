@@ -16,17 +16,14 @@ uniform float u_zoom;
 
 uniform float u_zIndicatorSize;
 uniform float u_eIndicatorSize;
+uniform float u_escapeRadiusSquared;
+uniform int u_maxIterations;
 
 //uniform float u_zIndicatorRotation;
 //uniform float u_eIndicatorRotation;
 //uniform bool u_renderIndicatorRotation;
 
 // ==================================
-
-const int ITERATIONS_BASE = 100;
-const int ITERATIONS_PER_ZOOM = 50;
-const int ITERATIONS_MIN = 50;
-const int ITERATIONS_MAX = 10000;
 
 struct ColorStop {
 	float position;
@@ -110,12 +107,11 @@ void main() {
 	if (renderIndicator(c, z, u_zIndicatorSize, CYAN)) return;
 	if (renderIndicator(c, e, u_eIndicatorSize, RED)) return;
 
-	// Calculate max iterations based on zoom
-	int maxIterations = clamp(int(float(ITERATIONS_BASE) + 1.0 * float(ITERATIONS_PER_ZOOM)), ITERATIONS_MIN, ITERATIONS_MAX);
+	int maxIterations = u_maxIterations;
 
 	// Mandelbrot iteration
 	int iterations = 0;
-	while (dot(z, z) < 4.0 && iterations < maxIterations) {
+	while (dot(z, z) < u_escapeRadiusSquared && iterations < maxIterations) {
 		z = COMPLEX_POWER(z, e) + c;
 		iterations++;
 	}

@@ -387,7 +387,9 @@
 	<div class="mb-6">
 		<h3 class="text-lg font-semibold mb-2">Position</h3>
 		{@render vector({ vector: mandelbrot.position, readonly: false })}
+	</div>
 
+	<div class="mb-6">
 		<h3 class="text-lg font-semibold mb-2">Zoom</h3>
 		<NumberField 
 			label="Zoom" 
@@ -502,6 +504,39 @@
 				{ value: IndicatorSetting.WhenToolSelected, label: "When Plane Selected" },
 			]}
 		/>
+	</div>
+
+	<div class="mb-6">
+		<h3 class="text-lg font-semibold mb-2">Iteration Settings</h3>
+		<div class="grid grid-cols-2 gap-2 mb-2">
+			<NumberField 
+				label="Iterations Base"
+				bind:value={mandelbrot.iterationsBase}
+			/>
+			<NumberField 
+				label="Iterations per Zoom"
+				bind:value={mandelbrot.iterationsPerZoom}
+			/>
+			<NumberField 
+				label="Iterations Min"
+				bind:value={mandelbrot.iterationsMin}
+			/>
+			<NumberField 
+				label="Iterations Max"
+				bind:value={mandelbrot.iterationsMax}
+			/>
+		</div>
+
+		<div class="text-sm opacity-80 mb-2">
+			Computed Max Iterations: {mandelbrot.maxIterationsComputed}
+		</div>
+
+		<div>
+			<NumberField 
+				label="Escape Radius"
+				bind:value={mandelbrot.escapeRadius}
+			/>
+		</div>
 	</div>
 
 	<!-- JSON Dump -->

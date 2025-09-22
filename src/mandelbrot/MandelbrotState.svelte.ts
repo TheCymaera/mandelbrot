@@ -43,6 +43,13 @@ export class Mandelbrot6DState {
 	speedScale = $state(1.0);
 	springScale = $state(1.0);
 
+	// Iteration controls
+	iterationsBase = $state(100);
+	iterationsPerZoom = $state(50);
+	iterationsMin = $state(50);
+	iterationsMax = $state(10000);
+	escapeRadius = $state(2.0);
+
 	orientationMatrix = Mat6.identity().set(mandelbrotPreset.orientationMatrix);
 
 	moveOnLocalAxes = $state(true);
@@ -63,6 +70,16 @@ export class Mandelbrot6DState {
 
 	get eIndicatorEffectiveSize() {
 		return this.#indicatorEffectiveSize(this.eIndicatorSize, this.eIndicatorSetting, xWiseInputMode);
+	}
+
+	get escapeRadiusSquared() {
+		const r = this.escapeRadius;
+		return r * r;
+	}
+
+	get maxIterationsComputed() {
+		const value = Math.round(this.iterationsBase + this.zoom * this.iterationsPerZoom);
+		return Math.max(this.iterationsMin, Math.min(this.iterationsMax, value));
 	}
 
 	/**
