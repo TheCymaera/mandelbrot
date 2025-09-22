@@ -45,10 +45,10 @@ export class Mandelbrot6DState {
 
 	// Iteration controls
 	iterationsBase = $state(100);
-	iterationsPerZoom = $state(50);
-	iterationsMin = $state(75);
+	iterationsPerZoom = $state(100);
+	iterationsMin = $state(100);
 	iterationsMax = $state(10000);
-	escapeRadius = $state(2.0);
+	escapeRadius = $state(Infinity);
 
 	orientationMatrix = Mat6.identity().set(mandelbrotPreset.orientationMatrix);
 
@@ -65,11 +65,11 @@ export class Mandelbrot6DState {
 	private lastTime = 0;
 
 	get zIndicatorEffectiveSize() {
-		return this.#indicatorEffectiveSize(this.zIndicatorSize, this.zIndicatorSetting, juliaWiseInputMode);
+		return this.#indicatorEffectiveSize(this.zIndicatorSize, this.zIndicatorSetting, juliaWiseInputMode.horizontalAxis, juliaWiseInputMode.verticalAxis);
 	}
 
 	get eIndicatorEffectiveSize() {
-		return this.#indicatorEffectiveSize(this.eIndicatorSize, this.eIndicatorSetting, xWiseInputMode);
+		return this.#indicatorEffectiveSize(this.eIndicatorSize, this.eIndicatorSetting, xWiseInputMode.horizontalAxis, xWiseInputMode.verticalAxis);
 	}
 
 	get escapeRadiusSquared() {
@@ -174,7 +174,7 @@ export class Mandelbrot6DState {
 		this.zoom += this.zoomVelocity * deltaTime;
 		this.zoomLevel = Math.pow(2, this.zoom);
 
-		const scaledVelocity = this.velocity.scale(deltaTime / this.zoomLevel);
+		const scaledVelocity = this.velocity.scale(deltaTime / Math.max(this.zoomLevel, inputMode.minMovementScale));
 		this.position = this.position.add(scaledVelocity);
 
 		this.rotateByPlaneMappings(inputMode.rotationPlanes, this.rotationVelocity * deltaTime, this.rotateOnLocalAxes);
@@ -211,11 +211,11 @@ export class Mandelbrot6DState {
 		this.rotationVelocity = 0;
 	}
 
-	#indicatorEffectiveSize(indicatorSize: number, setting: IndicatorSetting, tool: InputMode): number {
+	#indicatorEffectiveSize(indicatorSize: number, setting: IndicatorSetting, horizontalAxis: Vec6, verticalAxis: Vec6): number {
 		if (setting === IndicatorSetting.Never) return 0;
 		if (setting === IndicatorSetting.WhenToolSelected && 
-			(inputMap.mode.horizontalAxis !== tool.horizontalAxis &&
-			inputMap.mode.verticalAxis !== tool.verticalAxis)) {
+			(!inputMap.mode.horizontalAxis.equals(horizontalAxis)  &&
+			!inputMap.mode.verticalAxis.equals(verticalAxis))) {
 			return 0;
 		}
 		return indicatorSize / this.zoomLevel;

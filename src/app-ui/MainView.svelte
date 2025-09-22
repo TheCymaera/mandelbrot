@@ -9,7 +9,7 @@
 	import { fa5_brands_github, fa5_solid_bars, fa5_solid_info, fa5_solid_times } from 'fontawesome-svgs';
 	import { Vec6 } from '../math/Vec6.js';
 	import { Mat6 } from '../math/Mat6.js';
-	import { juliaToExponentMappings, juliaWiseInputMode, mandelbrotToExponentMappings, mandelbrotToJuliaMappings, regularInputMode, xWiseInputMode, type InputMode, type PlaneMapping } from '../mandelbrot/inputModes.js';
+	import { juliaToExponentMappings, juliaToExponentMode, juliaWiseInputMode, mandelbrotToExponentMappings, mandelbrotToJuliaMappings, regularInputMode, xWiseInputMode, type InputMode, type PlaneMapping } from '../mandelbrot/inputModes.js';
 	import { deepEquals } from '../utilities/deepEquals.js';
 	import SelectField from '../ui-components/SelectField.svelte';
 	import CheckboxField from '../ui-components/CheckboxField.svelte';
@@ -128,8 +128,9 @@
 
 	function getInputModeName(type: InputMode): string {
 		if (type === regularInputMode) return 'Classic';
-		if (type === juliaWiseInputMode) return 'Julia Plane';
-		if (type === xWiseInputMode) return 'X Plane';
+		if (type === juliaWiseInputMode) return 'Julia';
+		if (type === xWiseInputMode) return 'X';
+		if (type === juliaToExponentMode) return 'Julia to X';
 		return 'Custom';
 	}
 
@@ -265,7 +266,7 @@
 
 		<div class="text-sm mb-3">
 			<div class="flex items-center mb-1">
-				Press {@render kbd("1")}, {@render kbd("2")}, or {@render kbd("3")} to switch modes
+				Press {@render kbd("1")}, {@render kbd("2")}, {@render kbd("3")}, or {@render kbd("4")} to switch modes
 			</div>
 
 			<div class="flex items-center mb-1">

@@ -86,24 +86,18 @@ void main() {
 	vec2 texCoord = v_texCoord - vec2(0.5);
 	texCoord.y /= aspectRatio;
 
-	Vec6 offset = add(
-		scale(u_rightVector, texCoord.x),
-		scale(u_upVector, texCoord.y)
-	);
-	Vec6 pixelPosition = add(u_position, scale(offset, 1.0 / u_zoom));
-	
+	Vec6 pixelOffset = add(multiply(u_rightVector, texCoord.x), multiply(u_upVector, texCoord.y));
+	Vec6 pixelPosition = add(u_position, multiply(pixelOffset, 1.0 / u_zoom));
+
 	// Extract z, c, and e
 	vec2 z = vec2(pixelPosition.z, pixelPosition.w);
 	vec2 c = vec2(pixelPosition.x, pixelPosition.y);
 	vec2 e = vec2(pixelPosition.v, pixelPosition.u);
 
+
 	// Render indicators
 	vec4 CYAN = vec4(0.0, .8, .8, 1.0);
 	vec4 RED = vec4(1.0, 0.0, 0.0, 1.0);
-	vec4 GREEN = vec4(0.0, 1.0, 0.0, 1.0);
-	vec4 BLACK = vec4(0.0, 0.0, 0.0, 1.0);
-	vec4 WHITE = vec4(1.0, 1.0, 1.0, 1.0);
-
 	if (renderIndicator(c, z, u_zIndicatorSize, CYAN)) return;
 	if (renderIndicator(c, e, u_eIndicatorSize, RED)) return;
 

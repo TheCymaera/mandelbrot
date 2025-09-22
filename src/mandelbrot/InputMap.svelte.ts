@@ -1,4 +1,4 @@
-import { juliaWiseInputMode, regularInputMode, xWiseInputMode, type InputMode as InputMode } from './inputModes';
+import { juliaToExponentMode, juliaWiseInputMode, regularInputMode, xWiseInputMode, type InputMode as InputMode } from './inputModes';
 
 export const inputMap = new class InputMap {
 	mode: InputMode = $state({...regularInputMode});
@@ -43,6 +43,7 @@ export const inputMap = new class InputMap {
 				'Digit1': regularInputMode,
 				'Digit2': juliaWiseInputMode,
 				'Digit3': xWiseInputMode,
+				'Digit4': juliaToExponentMode,
 			};
 
 			const mode = movementModes[e.code];

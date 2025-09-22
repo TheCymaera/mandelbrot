@@ -8,6 +8,8 @@ export interface PlaneMapping {
 export interface InputMode {
 	horizontalAxis: Vec6;
 	verticalAxis: Vec6;
+	minMovementScale: number;
+
 	rotationPlanes: PlaneMapping[];
 	moveSpeed: number;
 	velocityLerp: number;
@@ -33,10 +35,12 @@ export const juliaToExponentMappings: PlaneMapping[] = [
 
 const rotateSpeed = 0.2;
 const rotationalVelocityLerp = 10;
+const minMovementScale = .1;
 
 export const regularInputMode: InputMode = {
-	horizontalAxis: new Vec6(1, 0, 0, 0, 0, 0),
-	verticalAxis: new Vec6(0, 1, 0, 0, 0, 0),
+	horizontalAxis: Vec6.X(),
+	verticalAxis: Vec6.Y(),
+	minMovementScale: -Infinity,
 	rotationPlanes: [],
 	moveSpeed: .6,
 	velocityLerp: 5,
@@ -46,8 +50,9 @@ export const regularInputMode: InputMode = {
 }
 
 export const juliaWiseInputMode: InputMode = {
-	horizontalAxis: new Vec6(0, 0, 1, 0, 0, 0),
-	verticalAxis: new Vec6(0, 0, 0, 1, 0, 0),
+	horizontalAxis: Vec6.Z(),
+	verticalAxis: Vec6.W(),
+	minMovementScale,
 	rotationPlanes: mandelbrotToJuliaMappings,
 	moveSpeed: .3,
 	velocityLerp: 10,
@@ -57,9 +62,22 @@ export const juliaWiseInputMode: InputMode = {
 }
 
 export const xWiseInputMode: InputMode = {
-	horizontalAxis: new Vec6(0, 0, 0, 0, 1, 0),
-	verticalAxis: new Vec6(0, 0, 0, 0, 0, 1),
+	horizontalAxis: Vec6.V(),
+	verticalAxis: Vec6.U(),
+	minMovementScale,
 	rotationPlanes: mandelbrotToExponentMappings,
+	moveSpeed: .3,
+	velocityLerp: 10,
+	rotateSpeed,
+	rotationalVelocityLerp,
+	zoomSpeed: 0,
+}
+
+export const juliaToExponentMode: InputMode = {
+	horizontalAxis: Vec6.V(),
+	verticalAxis: Vec6.U(),
+	minMovementScale,
+	rotationPlanes: juliaToExponentMappings,
 	moveSpeed: .3,
 	velocityLerp: 10,
 	rotateSpeed,

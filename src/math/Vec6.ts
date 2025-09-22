@@ -27,6 +27,11 @@ export class Vec6 {
 		return [this.x, this.y, this.z, this.w, this.v, this.u];
 	}
 
+	equals(other: Vec6): boolean {
+		return this.x === other.x && this.y === other.y && this.z === other.z &&
+				this.w === other.w && this.v === other.v && this.u === other.u;
+	}
+
 	add(other: Vec6): Vec6 {
 		return new Vec6(
 			this.x + other.x,
@@ -104,4 +109,12 @@ export class Vec6 {
 			default: throw new Error('Invalid index');
 		}
 	}
+
+	static ZERO(): Vec6 { return new Vec6(0, 0, 0, 0, 0, 0); }
+	static X(): Vec6 { return new Vec6(1, 0, 0, 0, 0, 0); }
+	static Y(): Vec6 { return new Vec6(0, 1, 0, 0, 0, 0); }
+	static Z(): Vec6 { return new Vec6(0, 0, 1, 0, 0, 0); }
+	static W(): Vec6 { return new Vec6(0, 0, 0, 1, 0, 0); }
+	static V(): Vec6 { return new Vec6(0, 0, 0, 0, 1, 0); }
+	static U(): Vec6 { return new Vec6(0, 0, 0, 0, 0, 1); }
 }
