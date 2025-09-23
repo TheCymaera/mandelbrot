@@ -72,6 +72,7 @@ export class MandelbrotRenderer {
 		setVec6(this.uniforms.u_upVector, state.upVector);
 		setVec6(this.uniforms.u_rightVector, state.rightVector);
 
+		setVec6(this.uniforms.u_relativePosition, state.relativePosition);
 		this.gl.uniform1f(this.uniforms.u_zIndicatorSize, state.zIndicatorEffectiveSize);
 		this.gl.uniform1f(this.uniforms.u_eIndicatorSize, state.eIndicatorEffectiveSize);
 		this.gl.uniform1f(this.uniforms.u_zoom, state.zoomLevel);
@@ -111,6 +112,7 @@ export class MandelbrotRenderer {
 			u_upVector: requireVec6('u_upVector'),
 			u_rightVector: requireVec6('u_rightVector'),
 
+			u_relativePosition: requireVec6('u_relativePosition'),
 			u_zIndicatorSize: requireUniform(gl, program, 'u_zIndicatorSize'),
 			u_eIndicatorSize: requireUniform(gl, program, 'u_eIndicatorSize'),
 			u_escapeRadiusSquared: requireUniform(gl, program, 'u_escapeRadiusSquared'),

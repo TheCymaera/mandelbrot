@@ -14,6 +14,7 @@ uniform Vec6 u_rightVector;
 uniform vec2 u_screenSize;
 uniform float u_zoom;
 
+uniform Vec6 u_relativePosition;
 uniform float u_zIndicatorSize;
 uniform float u_eIndicatorSize;
 uniform float u_escapeRadiusSquared;
@@ -81,24 +82,27 @@ vec2 complexPow(vec2 num, vec2 exponent) {
 #define COMPLEX_POWER complexPow
 
 void main() {
+	// Calculate pixel position
 	float aspectRatio = u_screenSize.x / u_screenSize.y;
+	vec2 pixelOffset = (v_texCoord - vec2(0.5)) / u_zoom;
+	pixelOffset.y /= aspectRatio;
 
-	vec2 texCoord = v_texCoord - vec2(0.5);
-	texCoord.y /= aspectRatio;
-
-	Vec6 pixelOffset = add(multiply(u_rightVector, texCoord.x), multiply(u_upVector, texCoord.y));
-	Vec6 pixelPosition = add(u_position, multiply(pixelOffset, 1.0 / u_zoom));
+	Vec6 pixelPosition = add(u_position, add(multiply(u_rightVector, pixelOffset.x), multiply(u_upVector, pixelOffset.y)));
 
 	// Extract z, c, and e
 	vec2 z = vec2(pixelPosition.z, pixelPosition.w);
 	vec2 c = vec2(pixelPosition.x, pixelPosition.y);
 	vec2 e = vec2(pixelPosition.v, pixelPosition.u);
 
+	vec2 cRelative = vec2(u_relativePosition.x, u_relativePosition.y) + pixelOffset;
+	vec2 zRelative = vec2(u_relativePosition.z, u_relativePosition.w);
+	vec2 eRelative = vec2(u_relativePosition.v, u_relativePosition.u);
+
 	// Render indicators
 	vec4 CYAN = vec4(0.0, .8, .8, 1.0);
 	vec4 RED = vec4(1.0, 0.0, 0.0, 1.0);
-	if (renderIndicator(c, z, u_zIndicatorSize, CYAN)) return;
-	if (renderIndicator(c, e, u_eIndicatorSize, RED)) return;
+	if (renderIndicator(cRelative, zRelative, u_zIndicatorSize, CYAN)) return;
+	if (renderIndicator(cRelative, eRelative, u_eIndicatorSize, RED)) return;
 
 	int maxIterations = u_maxIterations;
 

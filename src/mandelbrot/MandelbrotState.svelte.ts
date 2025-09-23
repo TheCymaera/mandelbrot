@@ -23,6 +23,7 @@ export class Mandelbrot6DState {
 	static readonly UP_VECTOR = new Vec6(0, 1, 0, 0, 0, 0);
 
 	position = $state(mandelbrotPreset.position);
+	relativePosition = $state(this.position);
 	velocity = new Vec6(0, 0, 0, 0, 0, 0);
 	
 	upVector = $state(Mandelbrot6DState.UP_VECTOR);
@@ -203,6 +204,7 @@ export class Mandelbrot6DState {
 		// Update the right / up vectors
 		this.rightVector = snapToCardinalDirection(this.orientationMatrix.multiplyVec6(Mandelbrot6DState.RIGHT_VECTOR));
 		this.upVector = snapToCardinalDirection(this.orientationMatrix.multiplyVec6(Mandelbrot6DState.UP_VECTOR));
+		this.relativePosition = this.orientationMatrix.multiplyTransposeVec6(this.position);
 	}
 
 	clearVelocities() {

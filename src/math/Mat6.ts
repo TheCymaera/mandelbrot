@@ -92,6 +92,32 @@ export class Mat6 {
 		return result;
 	}
 
+	/**
+	 * Efficiently multiply by the transpose of this matrix: result = (this^T) * v
+	 * For pure rotation matrices, transpose equals inverse, so this avoids an O(n^3) inverse.
+	 */
+	multiplyTransposeVec6(v: Vec6): Vec6 {
+		const components = [v.x, v.y, v.z, v.w, v.v, v.u];
+		const resultComponents = [0, 0, 0, 0, 0, 0];
+
+		for (let j = 0; j < 6; j++) {
+			let sum = 0;
+			for (let i = 0; i < 6; i++) {
+				sum += this.getElement(i, j)! * components[i]!; // dot(column j, v)
+			}
+			resultComponents[j] = sum;
+		}
+
+		return new Vec6(
+			resultComponents[0]!,
+			resultComponents[1]!,
+			resultComponents[2]!,
+			resultComponents[3]!,
+			resultComponents[4]!,
+			resultComponents[5]!,
+		);
+	}
+
 	static rotationFromAxisIndices(axis1: number, axis2: number, angle: number): Mat6 {
 		const matrix = new Mat6();
 		const cos = Math.cos(angle);
