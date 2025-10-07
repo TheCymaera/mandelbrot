@@ -6,7 +6,7 @@
 	import NumberField from '../ui-components/NumberField.svelte';
 	import Button from '../ui-components/Button.svelte';
 	import CircleButton from '../ui-components/CircleButton.svelte';
-	import { fa5_brands_github, fa5_solid_bars, fa5_solid_info, fa5_solid_paintBrush, fa5_solid_times, fa6_solid_code, fa6_solid_floppyDisk, fa6_solid_upDownLeftRight } from 'fontawesome-svgs';
+	import { fa5_brands_github, fa5_solid_bars, fa5_solid_book, fa5_solid_code, fa5_solid_info, fa5_solid_paintBrush, fa5_solid_play, fa5_solid_times, fa6_solid_upDownLeftRight } from 'fontawesome-svgs';
 	import { Vec6 } from '../math/Vec6.js';
 	import { Mat6 } from '../math/Mat6.js';
 	import { juliaToExponentMappings, juliaToExponentMode, juliaWiseInputMode, mandelbrotToExponentMappings, mandelbrotToJuliaMappings, regularInputMode, xWiseInputMode, type InputMode, type PlaneMapping } from '../mandelbrot/inputModes.js';
@@ -16,12 +16,13 @@
 	import { githubRepositoryLink } from './links.js';
 	import NavRailButton from '../ui-components/NavRailButton.svelte';
 	import NavRail from '../ui-components/NavRail.svelte';
-	import { basicPresets, hyperbolicJuliaPresets, juliaPresets, mandelbrotPresets, Preset, type PresetInfo } from '../mandelbrot/presets.js';
+	import { basicPresets, hyperbolicJuliaPresets, juliaPresets, mandelbrotPresets, type PresetInfo } from '../mandelbrot/presets.js';
 	import { MandelbrotLerp } from '../mandelbrot/MandelbrotLerp.js';
-	import { SimplifiedRotation } from '../mandelbrot/SimplifiedRotation.svelte.js';
 	import { linear } from 'svelte/easing';
 	import { easeInOutBezier } from '../math/easing.js';
 	import NavRailSpacer from '../ui-components/NavRailSpacer.svelte';
+	import RangeSlider from '../ui-components/RangeSlider.svelte';
+	import { Preset } from '../mandelbrot/Preset.js';
 	
 	let canvas: HTMLCanvasElement;
 	let renderer: MandelbrotRenderer;
@@ -104,7 +105,7 @@
 		try {
 			const data = JSON.parse(jsonDump);
 			const preset = Preset.fromMaybeJSON(data);
-			Preset.apply(mandelbrot, preset);
+			preset.apply(mandelbrot);
 			mandelbrot.clearVelocities();
 			jsonError = '';
 		} catch (error) {
@@ -161,7 +162,9 @@
 		return getAxisNameFromIndex(getAxisIndex(vec));
 	}
 
-	let sidebarSection: "controls" | "rendering" | "preset" | "json" = $state("controls");
+	let sidebarSection: "controls" | "rendering" | "preset" | "json" | "animation" = $state("controls");
+
+	const showExperimentalFeatures = location.search.includes("experimental");
 </script>
 <main 
 	style:--sidebar-width="450px"
@@ -239,7 +242,16 @@
 				label="Presets"
 				displayLabel={true}
 			>
-				{@html fa6_solid_floppyDisk}
+				{@html fa5_solid_book}
+			</NavRailButton>
+
+			<NavRailButton
+				label="Animation"
+				className={showExperimentalFeatures ? "" : "hidden"}
+				selected={sidebarSection === "animation"}
+				onPress={() => sidebarSection = "animation"}
+			>
+				{@html fa5_solid_play}
 			</NavRailButton>
 
 			<NavRailButton
@@ -248,12 +260,12 @@
 				label="JSON"
 				displayLabel={true}
 			>
-				{@html fa6_solid_code}
+				{@html fa5_solid_code}
 			</NavRailButton>
 
 			<NavRailSpacer />
 
-			<NavRailButton 
+			<NavRailButton
 				label="Info"
 				onPress={()=>location.hash = "#info"}
 			>
@@ -271,6 +283,7 @@
 				rendering: renderSettings,
 				preset: presetSettings,
 				json: jsonDump,
+				animation: animationSettings
 			}[sidebarSection]()}
 		</div>
 	</div>
@@ -587,7 +600,7 @@
 {/snippet}
 
 {#snippet jsonDump()}
-	{@const jsonString = prettyPrintJson(Preset.toJSON(mandelbrot))}
+	{@const jsonString = prettyPrintJson(Preset.fromState(mandelbrot).toJSON())}
 	<!-- JSON Dump -->
 	<div class="mb-6">
 		<h3 class="text-lg font-semibold mb-2">JSON Dump</h3>
@@ -668,7 +681,7 @@
 
 {#snippet presetSettings()}
 	{#snippet presetButton({preset}: {preset: PresetInfo})}
-		{@const isApplied = Preset.isApplied(mandelbrot, preset.preset) ||
+		{@const isApplied = preset.preset.isApplied(mandelbrot) ||
 			deepEquals(mandelbrot.behaviors.find(b => b instanceof MandelbrotLerp)?.end, preset.preset)
 		}
 		<Button
@@ -677,11 +690,7 @@
 			onPress={() => {
 				mandelbrot.behaviors = mandelbrot.behaviors.filter(b => !(b instanceof MandelbrotLerp));
 				mandelbrot.behaviors.push(new MandelbrotLerp({
-					start: {
-						position: mandelbrot.position,
-						zoom: mandelbrot.zoom,
-						simplifiedRotation: new SimplifiedRotation(mandelbrot.simplifiedRotation),
-					},
+					start: Preset.fromState(mandelbrot),
 					end: preset.preset,
 					duration: loadPresetLerpDuration,
 					easing: loadPresetLerpEase,
@@ -732,3 +741,24 @@
 		<div class="mb-6"></div>
 	{/each}
 {/snippet}
+
+{#snippet animationSettings()}
+	<div class="mb-6">
+		<h3 class="text-lg font-semibold mb-2">Animation</h3>
+			<div class="mb-2">
+				<label class="block text-sm font-medium mb-1" for="animation-offset-x">Animation Offset</label>
+				<div id="animation-offset-x">{@render vector({ vector: mandelbrot.animationOffset, readonly: false })}</div>
+			</div>
+			<div class="mb-2">
+				<RangeSlider
+					label="Animation Progress"
+					bind:value={mandelbrot.animationProgress}
+					min={-1}
+					max={1}
+					step={0.001}
+				/>
+				<div class="text-xs text-center mt-1">{(mandelbrot.animationProgress * 100).toFixed(1)}%</div>
+			</div>
+	</div>
+{/snippet}
+

@@ -1,6 +1,6 @@
 import { easeInOutBezier } from "../math/easing";
 import type { Mandelbrot6DState, MandelbrotBehavior } from "./MandelbrotState.svelte";
-import type { Preset } from "./presets";
+import { Preset } from "./Preset";
 
 export class MandelbrotLerp implements MandelbrotBehavior {
 	start: Preset;
@@ -25,24 +25,8 @@ export class MandelbrotLerp implements MandelbrotBehavior {
 
 		if (t >= 1.0) {
 			this.shouldRemove = true;
-			context.mandelbrot.position = this.end.position;
-			context.mandelbrot.zoom = this.end.zoom;
-			if ("orientationMatrix" in this.end) {
-				context.mandelbrot.orientationMatrix = this.end.orientationMatrix;
-			} else {
-				context.mandelbrot.simplifiedRotation = this.end.simplifiedRotation;
-			}
-			return;
 		}
 
-		context.mandelbrot.position = this.start.position.lerp(this.end.position, t);
-		context.mandelbrot.zoom = this.start.zoom + (this.end.zoom - this.start.zoom) * t;
-
-
-		if ("orientationMatrix" in this.start || "orientationMatrix" in this.end) {
-			return; // not supported
-		}
-
-		context.mandelbrot.simplifiedRotation = this.start.simplifiedRotation.lerp(this.end.simplifiedRotation, t);
+		this.start.lerp(this.end, t).apply(context.mandelbrot);
 	}
 }

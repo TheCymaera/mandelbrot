@@ -22,7 +22,7 @@ export class Mandelbrot6DState {
 	static readonly RIGHT_VECTOR = new Vec6(1, 0, 0, 0, 0, 0);
 	static readonly UP_VECTOR = new Vec6(0, 1, 0, 0, 0, 0);
 
-	position = $state(mandelbrotPreset.position);
+	position = $state(mandelbrotPreset.position!);
 	relativePosition = $state(this.position);
 	velocity = new Vec6(0, 0, 0, 0, 0, 0);
 
@@ -32,7 +32,7 @@ export class Mandelbrot6DState {
 	rightVector = $state(Mandelbrot6DState.RIGHT_VECTOR);
 	zoomLevel = $state(0);
 
-	zoom = $state(mandelbrotPreset.zoom);
+	zoom = $state(mandelbrotPreset.zoom!);
 	zoomVelocity = $state(0);
 	rotationVelocity = $state(0);
 
@@ -45,6 +45,10 @@ export class Mandelbrot6DState {
 
 	speedScale = $state(1.0);
 	springScale = $state(1.0);
+
+	// Animation controls
+	animationOffset = $state(new Vec6(.1, .1, 0, 0, 0, 0));
+	animationProgress = $state(0);
 
 	// Iteration controls
 	iterationsBase = $state(100);
@@ -187,13 +191,13 @@ export class Mandelbrot6DState {
 
 		// Zero velocities if small to prevent constant UI updates
 		const margin = 0.02;
-		if (this.velocity.length() < margin) {
+		if (this.velocity.length() < margin && targetVelocity.isZero()) {
 			this.velocity = new Vec6(0, 0, 0, 0, 0, 0);
 		}
-		if (Math.abs(this.zoomVelocity) < margin) {
+		if (Math.abs(this.zoomVelocity) < margin && targetZoomVelocity === 0) {
 			this.zoomVelocity = 0;
 		}
-		if (Math.abs(this.rotationVelocity) < margin) {
+		if (Math.abs(this.rotationVelocity) < margin && targetRotationVelocity === 0) {
 			this.rotationVelocity = 0;
 		}
 
@@ -232,7 +236,7 @@ export class Mandelbrot6DState {
 	}
 }
 
-function snapToCardinalDirection(vec: Vec6, threshold = 0.000001): Vec6 {
+function snapToCardinalDirection(vec: Vec6, threshold = 0.00001): Vec6 {
 	if (vec.x > 1 - threshold) return Vec6.X();
 	if (vec.x < -1 + threshold) return Vec6.NEG_X();
 	if (vec.y > 1 - threshold) return Vec6.Y();

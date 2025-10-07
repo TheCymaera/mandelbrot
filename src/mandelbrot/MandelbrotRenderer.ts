@@ -68,7 +68,7 @@ export class MandelbrotRenderer {
 		};
 
 		// Set uniforms
-		setVec6(this.uniforms.u_position, state.position);
+		setVec6(this.uniforms.u_position, state.position.add(state.animationOffset.scale(state.animationProgress)));
 		setVec6(this.uniforms.u_upVector, state.upVector);
 		setVec6(this.uniforms.u_rightVector, state.rightVector);
 

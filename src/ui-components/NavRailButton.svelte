@@ -8,6 +8,7 @@
 		onPress: () => void,
 		label: string,
 		displayLabel?: boolean,
+		className?: string,
 		children?: import('svelte').Snippet
 	}
 
@@ -18,11 +19,12 @@
 		onPress,
 		label,
 		displayLabel = true,
-		children
+		children,
+		className = ""
 	}: Props = $props();
 </script>
 <button 
-	class="{buttonVariants.inkWell} flex flex-col items-center justify-center rounded-full"
+	class="{buttonVariants.inkWell} {className} flex flex-col items-center justify-center rounded-full"
 	class:text-primary-500={selected} 
 	use:buttonBehaviour
 	onclick={onPress} 
