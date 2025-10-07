@@ -33,6 +33,13 @@ export class Mat6 {
 		return Array.from(this.m);
 	}
 
+	equals(other: Mat6): boolean {
+		for (let i = 0; i < 36; i++) {
+			if (this.m[i] !== other.m[i]) return false;
+		}
+		return true;
+	}
+
 	identity(): Mat6 {
 		this.m.fill(0);
 		for (let i = 0; i < 6; i++) {

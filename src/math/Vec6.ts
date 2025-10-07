@@ -43,7 +43,7 @@ export class Vec6 {
 		);
 	}
 
-	mix(other: Vec6, t: number): Vec6 {
+	lerp(other: Vec6, t: number): Vec6 {
 		return new Vec6(
 			this.x + (other.x - this.x) * t,
 			this.y + (other.y - this.y) * t,
@@ -88,6 +88,25 @@ export class Vec6 {
 			this.w - other.w,
 			this.v - other.v,
 			this.u - other.u
+		);
+	}
+
+	moveTowards(target: Vec6, maxDistance: number): Vec6 {
+		const diff = target.subtract(this);
+		if (diff.length() === 0) return this;
+
+		const distance = Math.min(maxDistance, this.distanceTo(target));
+		return this.add(diff.normalize().scale(distance));
+	}
+
+	distanceTo(other: Vec6): number {
+		return Math.sqrt(
+			(this.x - other.x) ** 2 +
+			(this.y - other.y) ** 2 +
+			(this.z - other.z) ** 2 +
+			(this.w - other.w) ** 2 +
+			(this.v - other.v) ** 2 +
+			(this.u - other.u) ** 2
 		);
 	}
 

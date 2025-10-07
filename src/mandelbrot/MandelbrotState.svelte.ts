@@ -2,9 +2,10 @@ import { Vec2 } from '../math/Vec2.js';
 import { Vec6 } from '../math/Vec6.js';
 import { Mat6 } from '../math/Mat6.js';
 import { inputMap } from './inputMap.svelte.js';
-import { juliaToExponentMappings, juliaWiseInputMode, mandelbrotToExponentMappings, mandelbrotToJuliaMappings, xWiseInputMode, type InputMode, type PlaneMapping } from './inputModes.js';
+import { juliaToExponentMappings, juliaWiseInputMode, mandelbrotToExponentMappings, mandelbrotToJuliaMappings, xWiseInputMode, type PlaneMapping } from './inputModes.js';
 import { mandelbrotPreset } from './presets.js';
 import { expLerpFactor, lerp } from '../math/utilities.js';
+import { SimplifiedRotation } from './SimplifiedRotation.svelte.js';
 
 export enum IndicatorSetting {
 	Always,
@@ -12,12 +13,11 @@ export enum IndicatorSetting {
 	WhenToolSelected,
 }
 
-export interface SimplifiedRotation {
-	juliaWise: number;
-	exponentWise: number;
-	juliaToExponentWise: number;
+export interface MandelbrotBehavior {
+	update(context: { mandelbrot: Mandelbrot6DState, currentTime: number, deltaTime: number }): void;
+	shouldRemove?: boolean;
 }
-
+	
 export class Mandelbrot6DState {
 	static readonly RIGHT_VECTOR = new Vec6(1, 0, 0, 0, 0, 0);
 	static readonly UP_VECTOR = new Vec6(0, 1, 0, 0, 0, 0);
@@ -25,6 +25,8 @@ export class Mandelbrot6DState {
 	position = $state(mandelbrotPreset.position);
 	relativePosition = $state(this.position);
 	velocity = new Vec6(0, 0, 0, 0, 0, 0);
+
+	//drift = $state(new Vec6(0, 0, 0, 0, 0, 0));
 	
 	upVector = $state(Mandelbrot6DState.UP_VECTOR);
 	rightVector = $state(Mandelbrot6DState.RIGHT_VECTOR);
@@ -51,17 +53,19 @@ export class Mandelbrot6DState {
 	iterationsMax = $state(5000);
 	escapeRadius = $state(Infinity);
 
-	orientationMatrix = Mat6.identity().set(mandelbrotPreset.orientationMatrix);
+	orientationMatrix = Mat6.identity();
 
 	moveOnLocalAxes = $state(true);
 	rotateOnLocalAxes = $state(false);
 
 	simplifiedRotationActive = $state(true);
-	simplifiedRotation: SimplifiedRotation = $state({
+	simplifiedRotation = $state(new SimplifiedRotation({
 		juliaWise: 0,
 		exponentWise: 0,
 		juliaToExponentWise: 0,
-	});
+	}));
+
+	behaviors: MandelbrotBehavior[] = [];
 
 	private lastTime = 0;
 
@@ -167,7 +171,7 @@ export class Mandelbrot6DState {
 		// Accelerate towards target velocity
 		const velocityLerp = expLerpFactor(inputMode.velocityLerp / this.springScale, deltaTime);
 		const rotationVelocityLerp = expLerpFactor(inputMode.rotationalVelocityLerp / this.springScale, deltaTime);
-		this.velocity = this.velocity.mix(targetVelocity, velocityLerp);
+		this.velocity = this.velocity.lerp(targetVelocity, velocityLerp);
 		this.zoomVelocity = lerp(this.zoomVelocity, targetZoomVelocity, velocityLerp);
 		this.rotationVelocity = lerp(this.rotationVelocity, targetRotationVelocity, rotationVelocityLerp);
 
@@ -177,6 +181,7 @@ export class Mandelbrot6DState {
 
 		const scaledVelocity = this.velocity.scale(deltaTime / Math.max(this.zoomLevel, inputMode.minMovementScale));
 		this.position = this.position.add(scaledVelocity);
+		//this.position = this.position.add(this.drift.scale(deltaTime));
 
 		this.rotateByPlaneMappings(inputMode.rotationPlanes, this.rotationVelocity * deltaTime, this.rotateOnLocalAxes);
 
@@ -192,14 +197,17 @@ export class Mandelbrot6DState {
 			this.rotationVelocity = 0;
 		}
 
+		// Update behaviors
+		for (const behavior of this.behaviors) {
+			behavior.update({ mandelbrot: this, currentTime, deltaTime });
+		}
+		this.behaviors = this.behaviors.filter(b => !b.shouldRemove);
+
 		// Update simplified rotation
 		if (this.simplifiedRotationActive) {
-			this.simplifiedRotation.juliaWise = wrapAngle(this.simplifiedRotation.juliaWise);
-			this.simplifiedRotation.exponentWise = wrapAngle(this.simplifiedRotation.exponentWise);
-			this.simplifiedRotation.juliaToExponentWise = wrapAngle(this.simplifiedRotation.juliaToExponentWise);
-			this.orientationMatrix = matrixFromSimplifiedRotation(this.simplifiedRotation);
+			this.simplifiedRotation.normalize();
+			this.orientationMatrix = this.simplifiedRotation.toMatrix();
 		}
-
 
 		// Update the right / up vectors
 		this.rightVector = snapToCardinalDirection(this.orientationMatrix.multiplyVec6(Mandelbrot6DState.RIGHT_VECTOR));
@@ -224,11 +232,6 @@ export class Mandelbrot6DState {
 	}
 }
 
-
-function wrapAngle(angle: number): number {
-	return ((angle + Math.PI) % (2 * Math.PI)) - Math.PI;
-}
-
 function snapToCardinalDirection(vec: Vec6, threshold = 0.000001): Vec6 {
 	if (vec.x > 1 - threshold) return Vec6.X();
 	if (vec.x < -1 + threshold) return Vec6.NEG_X();
@@ -243,25 +246,4 @@ function snapToCardinalDirection(vec: Vec6, threshold = 0.000001): Vec6 {
 	if (vec.u > 1 - threshold) return Vec6.U();
 	if (vec.u < -1 + threshold) return Vec6.NEG_U();
 	return vec;
-}
-
-
-let memoizedMatrix: { simplifiedRotation: SimplifiedRotation; matrix: Mat6 } | undefined = undefined;
-function matrixFromSimplifiedRotation(simplifiedRotation: SimplifiedRotation): Mat6 {
-	if (memoizedMatrix && simplifiedRotationEquals(memoizedMatrix.simplifiedRotation, simplifiedRotation)) {
-		return memoizedMatrix.matrix;
-	}
-
-	const matrix = Mat6.createPlaneMapping(Vec6.Z_INDEX, Vec6.W_INDEX, Vec6.V_INDEX, Vec6.U_INDEX, simplifiedRotation.juliaToExponentWise)
-		.multiply(Mat6.createPlaneMapping(Vec6.X_INDEX, Vec6.Y_INDEX, Vec6.V_INDEX, Vec6.U_INDEX, simplifiedRotation.exponentWise))
-		.multiply(Mat6.createPlaneMapping(Vec6.X_INDEX, Vec6.Y_INDEX, Vec6.Z_INDEX, Vec6.W_INDEX, simplifiedRotation.juliaWise))
-
-	memoizedMatrix = { simplifiedRotation: { ...simplifiedRotation }, matrix };
-	return matrix;
-}
-
-function simplifiedRotationEquals(a: SimplifiedRotation, b: SimplifiedRotation): boolean {
-	return a.juliaWise === b.juliaWise &&
-		a.exponentWise === b.exponentWise &&
-		a.juliaToExponentWise === b.juliaToExponentWise;
 }

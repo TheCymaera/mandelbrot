@@ -6,7 +6,7 @@
 	import NumberField from '../ui-components/NumberField.svelte';
 	import Button from '../ui-components/Button.svelte';
 	import CircleButton from '../ui-components/CircleButton.svelte';
-	import { fa5_brands_github, fa5_solid_bars, fa5_solid_info, fa5_solid_times } from 'fontawesome-svgs';
+	import { fa5_brands_github, fa5_solid_bars, fa5_solid_info, fa5_solid_paintBrush, fa5_solid_times, fa6_solid_code, fa6_solid_floppyDisk, fa6_solid_upDownLeftRight } from 'fontawesome-svgs';
 	import { Vec6 } from '../math/Vec6.js';
 	import { Mat6 } from '../math/Mat6.js';
 	import { juliaToExponentMappings, juliaToExponentMode, juliaWiseInputMode, mandelbrotToExponentMappings, mandelbrotToJuliaMappings, regularInputMode, xWiseInputMode, type InputMode, type PlaneMapping } from '../mandelbrot/inputModes.js';
@@ -14,6 +14,13 @@
 	import SelectField from '../ui-components/SelectField.svelte';
 	import CheckboxField from '../ui-components/CheckboxField.svelte';
 	import { githubRepositoryLink } from './links.js';
+	import NavRailButton from '../ui-components/NavRailButton.svelte';
+	import NavRail from '../ui-components/NavRail.svelte';
+	import { basicPresets, hyperbolicJuliaPresets, juliaPresets, mandelbrotPresets, Preset, type PresetInfo } from '../mandelbrot/presets.js';
+  import { MandelbrotLerp } from '../mandelbrot/MandelbrotLerp.js';
+  import { SimplifiedRotation } from '../mandelbrot/SimplifiedRotation.svelte.js';
+  import { linear } from 'svelte/easing';
+  import { easeInOutBezier } from '../math/easing.js';
 	
 	let canvas: HTMLCanvasElement;
 	let renderer: MandelbrotRenderer;
@@ -21,6 +28,9 @@
 	let mandelbrot = $state(new Mandelbrot6DState());
 	let animationFrame: number;
 	let rotateBy = $state(90);
+
+	let loadPresetLerpDuration = $state(1);
+	let loadPresetLerpEase = $state(easeInOutBezier);
 
 	// Sidebar state
 	let sidebarOpen = $state(true);
@@ -71,7 +81,7 @@
 		return JSON.stringify(data, function (k, v) {
 			if (v instanceof Array) return JSON.stringify(v);
 			return v;
-		}, 2)
+		}, "\t")
 		.replace(/\\/g, '')
 		.replace(/\"\[/g, '[')
 		.replace(/\]\"/g,']')
@@ -79,47 +89,14 @@
 		.replace(/\}\"/g,'}');
 	}
 
-	const jsonString = $derived.by(()=>{
-		return prettyPrintJson({
-			position: mandelbrot.position.toArray(),
-			zoom: mandelbrot.zoom,
-			
-			orientationMatrix: mandelbrot.simplifiedRotationActive ? undefined :
-				mandelbrot.orientationMatrix.toArray(),
-			
-			simplifiedRotation: !mandelbrot.simplifiedRotationActive ? undefined : 
-				mandelbrot.simplifiedRotation
-		});
-	});
-
-	
 	let jsonError = $state('');
 	
 	function loadJsonDump(jsonDump: string) {
 		try {
-			const data = JSON.parse(jsonDump) as Partial<Mandelbrot6DState>;
-
-			// Validate data structure
-			if (!data.position || !Array.isArray(data.position) || data.position.length !== 6) {
-				throw new Error('Invalid position data');
-			}
-			
-			// Apply data
-			mandelbrot.position = Vec6.fromMaybeArray(data.position);
-			mandelbrot.zoom = data.zoom ?? mandelbrot.zoom;
-
-			if (data.orientationMatrix) {
-				mandelbrot.simplifiedRotationActive = false;
-				mandelbrot.orientationMatrix = Mat6.fromMaybeArray(data.orientationMatrix);
-			}
-
-			if (data.simplifiedRotation) {
-				mandelbrot.simplifiedRotationActive = true;
-				mandelbrot.simplifiedRotation = data.simplifiedRotation;
-			}
-
+			const data = JSON.parse(jsonDump);
+			const preset = Preset.fromMaybeJSON(data);
+			Preset.apply(mandelbrot, preset);
 			mandelbrot.clearVelocities();
-
 			jsonError = '';
 		} catch (error) {
 			jsonError = error instanceof Error ? error.message : 'Invalid JSON format';
@@ -127,7 +104,7 @@
 	}
 
 	function getInputModeName(type: InputMode): string {
-		if (type === regularInputMode) return 'Classic';
+		if (type === regularInputMode) return 'Mandelbrot';
 		if (type === juliaWiseInputMode) return 'Julia';
 		if (type === xWiseInputMode) return 'X';
 		if (type === juliaToExponentMode) return 'Julia to X';
@@ -174,9 +151,11 @@
 	function getAxisName(vec: Vec6) {
 		return getAxisNameFromIndex(getAxisIndex(vec));
 	}
+
+	let sidebarSection: "controls" | "rendering" | "preset" | "json" = $state("controls");
 </script>
 <main 
-	style:--sidebar-width="400px"
+	style:--sidebar-width="450px"
 	style:--sidebar-height="50%"
 	class="inset-0 bg-background overflow-hidden relative"
 >
@@ -221,9 +200,10 @@
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<div 
 		class="
-			absolute bottom-0 left-0 bg-surface transition-transform duration-300 overflow-y-auto
+			absolute bottom-0 left-0 bg-surface transition-transform duration-300
 			w-full h-[var(--sidebar-height)]
 			md:w-[var(--sidebar-width)] md:h-full
+			grid grid-cols-[min-content_1fr]
 			{sidebarOpen ? 
 				`translate-x-0 translate-y-0` : 
 				'translate-y-full md:translate-y-0 md:-translate-x-full'
@@ -235,13 +215,55 @@
 			}
 		}}
 	>
-		<div class="p-4">
-			{@render sidebarMain()}
+		<NavRail placement="left">
+			<NavRailButton
+				selected={sidebarSection === "controls"}
+				onPress={() => sidebarSection = "controls"}
+				label="Position"
+				displayLabel={true}
+			>
+				{@html fa6_solid_upDownLeftRight}
+			</NavRailButton>
+
+			<NavRailButton
+				selected={sidebarSection === "rendering"}
+				onPress={() => sidebarSection = "rendering"}
+				label="Display"
+				displayLabel={true}
+			>
+				{@html fa5_solid_paintBrush}
+			</NavRailButton>
+
+			<NavRailButton
+				selected={sidebarSection === "preset"}
+				onPress={() => sidebarSection = "preset"}
+				label="Presets"
+				displayLabel={true}
+			>
+				{@html fa6_solid_floppyDisk}
+			</NavRailButton>
+
+			<NavRailButton
+				selected={sidebarSection === "json"}
+				onPress={() => sidebarSection = "json"}
+				label="JSON"
+				displayLabel={true}
+			>
+				{@html fa6_solid_code}
+			</NavRailButton>
+		</NavRail>
+		<div class="p-4 overflow-y-auto">
+			{@render {
+				controls: controlSettings,
+				rendering: renderSettings,
+				preset: presetSettings,
+				json: jsonDump,
+			}[sidebarSection]()}
 		</div>
 	</div>
 </main>
 
-{#snippet sidebarMain()}
+{#snippet controlSettings()}
 	<!-- Input Mode -->
 	<div class="mb-6">
 		<h3 class="text-lg font-semibold mb-2">Input Mode</h3>
@@ -475,7 +497,9 @@
 		</h4>
 		{@render vector({ vector: mandelbrot.upVector, readonly: true })}
 	</div>
+{/snippet}
 
+{#snippet renderSettings()}
 	<!-- Render settings -->
 	<div class="mb-6">
 		<h3 class="text-lg font-semibold mb-2">Indicators</h3>
@@ -539,7 +563,10 @@
 			/>
 		</div>
 	</div>
+{/snippet}
 
+{#snippet jsonDump()}
+	{@const jsonString = prettyPrintJson(Preset.toJSON(mandelbrot))}
 	<!-- JSON Dump -->
 	<div class="mb-6">
 		<h3 class="text-lg font-semibold mb-2">JSON Dump</h3>
@@ -616,4 +643,71 @@
 			onInput={e => options.vector.u = e.value}
 		/>
 	</div>
+{/snippet}
+
+{#snippet presetSettings()}
+	{#snippet presetButton({preset}: {preset: PresetInfo})}
+		{@const isApplied = Preset.isApplied(mandelbrot, preset.preset) ||
+			deepEquals(mandelbrot.behaviors.find(b => b instanceof MandelbrotLerp)?.end, preset.preset)
+		}
+		<Button
+			className="w-full p-2! rounded! mb-2"
+			variant={isApplied ? 'filled' : 'outlined'}
+			onPress={() => {
+				mandelbrot.behaviors = mandelbrot.behaviors.filter(b => !(b instanceof MandelbrotLerp));
+				mandelbrot.behaviors.push(new MandelbrotLerp({
+					start: {
+						position: mandelbrot.position,
+						zoom: mandelbrot.zoom,
+						simplifiedRotation: new SimplifiedRotation(mandelbrot.simplifiedRotation),
+					},
+					end: preset.preset,
+					duration: loadPresetLerpDuration,
+					easing: loadPresetLerpEase,
+				}))
+				mandelbrot.clearVelocities();
+			}}
+		>
+			{preset.name}
+		</Button>
+	{/snippet}
+
+	<div class="grid grid-cols-3 gap-2 mb-6">
+		{#each basicPresets as preset}
+			{@render presetButton({ preset })}
+		{/each}
+	</div>
+
+	<div class="grid grid-cols-2 gap-2 mb-6">
+		<NumberField 
+			label="Transition Seconds"
+			bind:value={
+				() => loadPresetLerpDuration,
+				(v) => loadPresetLerpDuration = Math.max(0, v)
+			}
+			className="w-full"
+		/>
+
+		<SelectField
+			label="Easing Function"
+			bind:value={loadPresetLerpEase}
+			options={[
+				{ value: linear, label: "Linear" },
+				{ value: easeInOutBezier, label: "Ease In Out" },
+			]}
+		/>
+	</div>
+
+
+	{#each [
+		{ name: "Mandelbrot", presets: mandelbrotPresets },
+		{ name: "Julia", presets: juliaPresets },
+		{ name: "Hyperbolic Julia", presets: hyperbolicJuliaPresets },
+	] as presetSection}
+		<h3 class="text-lg font-semibold mb-2">{presetSection.name}</h3>
+		{#each presetSection.presets as preset}
+			{@render presetButton({ preset })}
+		{/each}
+		<div class="mb-6"></div>
+	{/each}
 {/snippet}

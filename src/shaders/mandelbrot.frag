@@ -20,12 +20,6 @@ uniform float u_eIndicatorSize;
 uniform float u_escapeRadiusSquared;
 uniform int u_maxIterations;
 
-//uniform float u_zIndicatorRotation;
-//uniform float u_eIndicatorRotation;
-//uniform bool u_renderIndicatorRotation;
-
-// ==================================
-
 struct ColorStop {
 	float position;
 	vec4 color;
@@ -50,21 +44,6 @@ vec4 sampleGradient(float position) {
 	return gradient[maxIndex].color;
 }
 
-vec2 complexPowOld(vec2 num, vec2 exponent) {
-	float r = length(num);
-	float theta = atan(num.y, num.x);
-	vec2 result;
-
-	if (r == 0.0) return vec2(0.0, 0.0);
-
-	r = pow(r, exponent.x) * exp2(-theta * exponent.y);
-	theta = theta * exponent.x + log2(r) * exponent.y;
-
-	result.x = r * cos(theta);
-	result.y = r * sin(theta);
-	return result;
-}
-
 vec2 complexPow(vec2 num, vec2 exponent) {
 	float r = length(num);
 
@@ -78,8 +57,6 @@ vec2 complexPow(vec2 num, vec2 exponent) {
 
 	return vec2(newR * cos(newTheta), newR * sin(newTheta));
 }
-
-#define COMPLEX_POWER complexPow
 
 void main() {
 	// Calculate pixel position
@@ -109,7 +86,7 @@ void main() {
 	// Mandelbrot iteration
 	int iterations = 0;
 	while (dot(z, z) < u_escapeRadiusSquared && iterations < maxIterations) {
-		z = COMPLEX_POWER(z, e) + c;
+		z = complexPow(z, e) + c;
 		iterations++;
 	}
 	
