@@ -144,6 +144,16 @@ const mandelbrotSword = Preset.fromJSON({
 	}
 });
 
+const mandelbrotGalaxies = Preset.fromJSON({
+	"position": [0.1607335596984232,-0.6010408296697332,-0.47452755551124787,-0.2677114813307161,2,0],
+	"zoom": 5.9688923907607245,
+	"simplifiedRotation": {
+		"juliaWise": 0,
+		"exponentWise": 0,
+		"juliaToExponentWise": 0
+	}
+});
+
 const juliaPetals = Preset.fromJSON({
 	"position": [0.2892743051580473,-0.5197771566971138,0,0,2,0],
 	"zoom": -1.7994011311807947,
@@ -388,6 +398,7 @@ export const basicPresets: PresetInfo[] = [
 export const mandelbrotPresets: PresetInfo[] = [
 	{ name: "Classic Mandelbrot", preset: mandelbrotPreset },
 	{ name: "Mandelbrot Sword", preset: mandelbrotSword },
+	//{ name: "Mandelbrot Galaxies", preset: mandelbrotGalaxies },
 ];
 
 export const juliaPresets: PresetInfo[] = [

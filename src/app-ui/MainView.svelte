@@ -17,10 +17,11 @@
 	import NavRailButton from '../ui-components/NavRailButton.svelte';
 	import NavRail from '../ui-components/NavRail.svelte';
 	import { basicPresets, hyperbolicJuliaPresets, juliaPresets, mandelbrotPresets, Preset, type PresetInfo } from '../mandelbrot/presets.js';
-  import { MandelbrotLerp } from '../mandelbrot/MandelbrotLerp.js';
-  import { SimplifiedRotation } from '../mandelbrot/SimplifiedRotation.svelte.js';
-  import { linear } from 'svelte/easing';
-  import { easeInOutBezier } from '../math/easing.js';
+	import { MandelbrotLerp } from '../mandelbrot/MandelbrotLerp.js';
+	import { SimplifiedRotation } from '../mandelbrot/SimplifiedRotation.svelte.js';
+	import { linear } from 'svelte/easing';
+	import { easeInOutBezier } from '../math/easing.js';
+	import NavRailSpacer from '../ui-components/NavRailSpacer.svelte';
 	
 	let canvas: HTMLCanvasElement;
 	let renderer: MandelbrotRenderer;
@@ -28,6 +29,14 @@
 	let mandelbrot = $state(new Mandelbrot6DState());
 	let animationFrame: number;
 	let rotateBy = $state(90);
+
+	inputMap.onHalfSpeed = () => {
+		mandelbrot.speedScale = Math.max(1e-6, mandelbrot.speedScale / 2);
+	};
+
+	inputMap.onDoubleSpeed = () => {
+		mandelbrot.speedScale = Math.min(1e6, mandelbrot.speedScale * 2);
+	};
 
 	let loadPresetLerpDuration = $state(1);
 	let loadPresetLerpEase = $state(easeInOutBezier);
@@ -178,16 +187,6 @@
 			>
 				{@html sidebarOpen ? fa5_solid_times : fa5_solid_bars}
 			</CircleButton>
-			<CircleButton 
-				onPress={()=>location.hash = "#info"}
-			>
-				{@html fa5_solid_info}
-			</CircleButton>
-			<a tabindex="-1" href="{githubRepositoryLink}" target="_blank">
-				<CircleButton onPress={()=>{}}>
-					{@html fa5_brands_github}
-				</CircleButton>
-			</a>
 		</div>
 		<canvas 
 			bind:this={canvas}
@@ -251,6 +250,20 @@
 			>
 				{@html fa6_solid_code}
 			</NavRailButton>
+
+			<NavRailSpacer />
+
+			<NavRailButton 
+				label="Info"
+				onPress={()=>location.hash = "#info"}
+			>
+				{@html fa5_solid_info}
+			</NavRailButton>
+			<a tabindex="-1" href="{githubRepositoryLink}" target="_blank">
+				<NavRailButton label="GitHub" onPress={()=>{}}>
+					{@html fa5_brands_github}
+				</NavRailButton>
+			</a>
 		</NavRail>
 		<div class="p-4 overflow-y-auto">
 			{@render {
@@ -313,6 +326,14 @@
 
 				{@render kbd("Shift")}
 				{@render kbd("Space")}
+			</div>
+
+			<div class="flex items-center mb-1">
+				<div>
+					Adjust Speed
+				</div>
+				{@render kbd("]")}
+				{@render kbd("[")}
 			</div>
 		</div>
 

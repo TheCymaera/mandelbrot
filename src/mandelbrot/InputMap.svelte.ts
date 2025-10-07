@@ -27,6 +27,9 @@ export const inputMap = new class InputMap {
 		return this.#keys.has('Space');
 	}
 
+	onHalfSpeed = ()=>{}
+	onDoubleSpeed = ()=>{}
+
 	#keys = new Set<string>();
 	
 	constructor() {
@@ -49,6 +52,21 @@ export const inputMap = new class InputMap {
 			const mode = movementModes[e.code];
 			if (!mode) return;
 			this.mode = { ...mode };
+		});
+
+		window.addEventListener('keydown', (e) => {
+			// ignore if input is focused
+			if (document.activeElement instanceof HTMLInputElement ||
+				document.activeElement instanceof HTMLTextAreaElement) {
+				return;
+			}
+
+			if (e.code === 'BracketLeft') {
+				this.onHalfSpeed();
+			}
+			else if (e.code === 'BracketRight') {
+				this.onDoubleSpeed();
+			}
 		});
 		
 		window.addEventListener('keyup', (e) => {
