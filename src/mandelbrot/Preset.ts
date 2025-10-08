@@ -59,7 +59,7 @@ export class Preset {
 			json.escapeRadius = this.escapeRadius === Infinity ? "Infinity" : this.escapeRadius;
 		}
 		if (this.simplifiedRotation) {
-			json.simplifiedRotation = this.simplifiedRotation;
+			json.simplifiedRotation = this.simplifiedRotation.toJSON();
 		} else if (this.orientationMatrix) {
 			json.orientationMatrix = this.orientationMatrix.toArray();
 		}

@@ -11,9 +11,9 @@ export namespace SimplifiedRotation {
 }
 
 export class SimplifiedRotation implements SimplifiedRotation.Params {
-	juliaWise: number;
-	exponentWise: number;
-	juliaToExponentWise: number;
+	juliaWise = $state(0);
+	exponentWise = $state(0);
+	juliaToExponentWise = $state(0);
 
 	constructor({ juliaWise, exponentWise, juliaToExponentWise }: SimplifiedRotation.Params) {
 		this.juliaWise = juliaWise;
@@ -65,6 +65,14 @@ export class SimplifiedRotation implements SimplifiedRotation.Params {
 		this.juliaWise = wrapAngle(this.juliaWise);
 		this.exponentWise = wrapAngle(this.exponentWise);
 		this.juliaToExponentWise = wrapAngle(this.juliaToExponentWise);
+	}
+
+	toJSON(): SimplifiedRotation.Params {
+		return {
+			juliaWise: this.juliaWise,
+			exponentWise: this.exponentWise,
+			juliaToExponentWise: this.juliaToExponentWise,
+		};
 	}
 }
 
