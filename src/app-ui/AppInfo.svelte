@@ -23,7 +23,7 @@
 		You may use this tool for both commercial or non-commercial purposes. Attribution is appreciated but not required.
 	</p>
 	
-	<!--<div class="mb-6">
+	<div class="mb-6">
 		<h2 class="text-xl font-bold mb-2">How it works</h2>
 		<div class="aspect-video max-w-140 mb-2">
 			<iframe 
@@ -35,7 +35,7 @@
 				allowfullscreen>
 			</iframe>
 		</div>
-	</div>-->
+	</div>
 	
 	<div class="mb-6">
 		<h2 class="text-xl font-bold mb-2">GitHub Repository</h2>
