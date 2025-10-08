@@ -1,3 +1,4 @@
+import { lerp } from './numbers.js';
 import { Vec6 } from './Vec6.js';
 
 export class Mat6 {
@@ -123,6 +124,18 @@ export class Mat6 {
 			resultComponents[4]!,
 			resultComponents[5]!,
 		);
+	}
+
+	perElementLerp(other: Mat6, t: number): Mat6 {
+		const out = new Mat6();
+		for (let r = 0; r < 6; r++) {
+			for (let c = 0; c < 6; c++) {
+				const v0 = this.getElement(r, c)!;
+				const v1 = other.getElement(r, c)!;
+				out.setElement(r, c, lerp(v0, v1, t));
+			}
+		}
+		return out;
 	}
 
 	static rotationFromAxisIndices(axis1: number, axis2: number, angle: number): Mat6 {

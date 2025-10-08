@@ -4,7 +4,7 @@ import { Mat6 } from '../math/Mat6.js';
 import { inputMap } from './inputMap.svelte.js';
 import { juliaToExponentMappings, juliaWiseInputMode, mandelbrotToExponentMappings, mandelbrotToJuliaMappings, xWiseInputMode, type PlaneMapping } from './inputModes.js';
 import { mandelbrotPreset } from './presets.js';
-import { expLerpFactor, lerp } from '../math/utilities.js';
+import { expLerpFactor, lerp } from '../math/numbers.js';
 import { SimplifiedRotation } from './SimplifiedRotation.svelte.js';
 
 export enum IndicatorSetting {

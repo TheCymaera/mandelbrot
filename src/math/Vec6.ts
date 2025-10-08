@@ -1,3 +1,5 @@
+import { lerp } from "./numbers";
+
 export class Vec6 {
 	x: number;
 	y: number;
@@ -45,12 +47,12 @@ export class Vec6 {
 
 	lerp(other: Vec6, t: number): Vec6 {
 		return new Vec6(
-			this.x + (other.x - this.x) * t,
-			this.y + (other.y - this.y) * t,
-			this.z + (other.z - this.z) * t,
-			this.w + (other.w - this.w) * t,
-			this.v + (other.v - this.v) * t,
-			this.u + (other.u - this.u) * t
+			lerp(this.x, other.x, t),
+			lerp(this.y, other.y, t),
+			lerp(this.z, other.z, t),
+			lerp(this.w, other.w, t),
+			lerp(this.v, other.v, t),
+			lerp(this.u, other.u, t),
 		);
 	}
 

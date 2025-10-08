@@ -1,3 +1,5 @@
+import { lerp } from "./numbers";
+
 export class Vec2 {
 	constructor(public x: number = 0, public y: number = 0) {}
 	
@@ -42,10 +44,10 @@ export class Vec2 {
 		return len > 0 ? new Vec2(this.x / len, this.y / len) : new Vec2(0, 0);
 	}
 	
-	mix(other: Vec2, t: number): Vec2 {
+	lerp(other: Vec2, t: number): Vec2 {
 		return new Vec2(
-			this.x + (other.x - this.x) * t,
-			this.y + (other.y - this.y) * t
+			lerp(this.x, other.x, t),
+			lerp(this.y, other.y, t)
 		);
 	}
 	

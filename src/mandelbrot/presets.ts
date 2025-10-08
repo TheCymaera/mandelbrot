@@ -370,6 +370,24 @@ const skeletonCurls2 = Preset.fromJSON({
 	}
 });
 
+const kraken = Preset.fromJSON({
+	"position": [0.30570085227996846,0,-1.8718778512064057e-17,0,2,0],
+	"zoom": -2.2,
+	"escapeRadius": "Infinity",
+	"orientationMatrix": [6.085092880864076e-17,0,0.9091358754682789,0,0.41649965178440385,0,0,6.085092880864076e-17,0,0.9091358754682789,0,0.41649965178440385,-0.9937710832381651,0,0.046415021159678015,0,-0.10131475672571655,0,0,-0.9937710832381651,0,0.046415021159678015,0,-0.10131475672571655,-0.11144072020426117,0,-0.41390531012210535,0,0.9034729437747872,0,0,-0.11144072020426117,0,-0.41390531012210535,0,0.9034729437747872]
+});
+
+const lightTentacle = Preset.fromJSON({
+	"position": [0.15407023317611832,-0.3337259992935214,0.3553590371898867,0.39540066659353024,1.655852012843836,0.28548709783626947],
+	"zoom": -2.3106875237851714,
+	"escapeRadius": "Infinity",
+	"simplifiedRotation": {
+		"juliaWise": 1.5731192098407991,
+		"exponentWise": 0,
+		"juliaToExponentWise": 0
+	}
+});
+
 
 export const basicPresets: PresetInfo[] = [
 	{ name: "Mandelbrot", preset: mandelbrotPreset },
@@ -378,13 +396,13 @@ export const basicPresets: PresetInfo[] = [
 ];
 
 export const mandelbrotPresets: PresetInfo[] = [
-	{ name: "Classic Mandelbrot", preset: mandelbrotPreset },
+	{ name: "Classic Mandelbrot", preset: new Preset({ ...mandelbrotPreset, escapeRadius: Infinity }) },
 	{ name: "Mandelbrot Sword", preset: mandelbrotSword },
 	//{ name: "Mandelbrot Galaxies", preset: mandelbrotGalaxies },
 ];
 
 export const juliaPresets: PresetInfo[] = [
-	{ name: "Black Hole", preset: juliaPreset },
+	{ name: "Black Hole", preset: new Preset({ ...juliaPreset, escapeRadius: Infinity }) },
 	{ name: "Galaxies", preset: juliaGalaxies },
 	{ name: "Horizontal Galaxies", preset: juliaHorizontalGalaxies },
 	{ name: "Petals Vertical", preset: juliaPetals },
@@ -412,6 +430,7 @@ export const hyperbolicJuliaPresets: PresetInfo[] = [
 	{ name: "Lightning Set", preset: lightningSet },
 
 	{ name: "Tentacle", preset: tentacle },
+	{ name: "Light Tentacle", preset: lightTentacle },
 
 	{ name: "Stick Bug", preset: stickBug },
 
@@ -428,4 +447,8 @@ export const hyperbolicJuliaPresets: PresetInfo[] = [
 	{ name: "Chaotic Inset Curls", preset: chaoticInsetCurls },
 	{ name: "Chaotic Circlet", preset: chaoticCirclet },
 
+];
+
+export const specialPresets: PresetInfo[] = [
+	{ name: "Kraken", preset: kraken },
 ];

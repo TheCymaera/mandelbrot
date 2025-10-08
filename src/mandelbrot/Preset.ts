@@ -1,4 +1,5 @@
 import { Mat6 } from "../math/Mat6";
+import { lerp } from "../math/numbers";
 import { Vec6 } from "../math/Vec6";
 import { Mandelbrot6DState } from "./MandelbrotState.svelte";
 import { SimplifiedRotation } from "./SimplifiedRotation.svelte";
@@ -102,18 +103,21 @@ export class Preset {
 		}
 
 		if (this.zoom !== undefined && target.zoom !== undefined) {
-			preset.zoom = this.zoom + (target.zoom - this.zoom) * t;
+			preset.zoom = lerp(this.zoom, target.zoom, t);
 		}
 
 		if (this.escapeRadius !== undefined && target.escapeRadius !== undefined) {
-			preset.escapeRadius = (this.escapeRadius + (target.escapeRadius - this.escapeRadius) * t) || Infinity;
+			preset.escapeRadius = lerp(this.escapeRadius, target.escapeRadius, t) || Infinity;
 		}
 
 		if (this.simplifiedRotation && target.simplifiedRotation) {
 			preset.simplifiedRotation = this.simplifiedRotation.lerp(target.simplifiedRotation, t);
-		}
+		} else {
+			const startMatrix = this.orientationMatrix || this.simplifiedRotation?.toMatrix() || Mat6.identity();
+			const endMatrix = target.orientationMatrix || target.simplifiedRotation?.toMatrix() || Mat6.identity();
 
-		// Orientation matrix lerp not supported
+			preset.orientationMatrix = startMatrix.clone().perElementLerp(endMatrix, t);
+		}
 
 		return preset;
 	}

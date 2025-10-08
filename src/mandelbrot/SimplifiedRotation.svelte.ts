@@ -1,4 +1,5 @@
 import { Mat6 } from "../math/Mat6";
+import { lerp } from "../math/numbers";
 import { Vec6 } from "../math/Vec6";
 
 export namespace SimplifiedRotation {
@@ -54,9 +55,9 @@ export class SimplifiedRotation implements SimplifiedRotation.Params {
 
 	lerp(target: SimplifiedRotation, t: number): SimplifiedRotation {
 		return new SimplifiedRotation({
-			juliaWise: this.juliaWise + (target.juliaWise - this.juliaWise) * t,
-			exponentWise: this.exponentWise + (target.exponentWise - this.exponentWise) * t,
-			juliaToExponentWise: this.juliaToExponentWise + (target.juliaToExponentWise - this.juliaToExponentWise) * t,
+			juliaWise: lerp(this.juliaWise, target.juliaWise, t),
+			exponentWise: lerp(this.exponentWise, target.exponentWise, t),
+			juliaToExponentWise: lerp(this.juliaToExponentWise, target.juliaToExponentWise, t),
 		});
 	}
 
