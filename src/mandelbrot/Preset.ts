@@ -85,10 +85,12 @@ export class Preset {
 		if (this.zoom !== undefined && state.zoom !== this.zoom) return false;
 		if (this.escapeRadius !== undefined && state.escapeRadius !== this.escapeRadius) return false;
 		if (this.simplifiedRotation) {
-			return state.simplifiedRotationActive && state.simplifiedRotation.equals(this.simplifiedRotation);
+			const isEqual = state.simplifiedRotationActive && state.simplifiedRotation.equals(this.simplifiedRotation);
+			if (!isEqual) return false;
 		}
 		if (this.orientationMatrix) {
-			return !state.simplifiedRotationActive && state.orientationMatrix.equals(this.orientationMatrix);
+			const isEqual = !state.simplifiedRotationActive && state.orientationMatrix.equals(this.orientationMatrix);
+			if (!isEqual) return false;
 		}
 		return true;
 	}

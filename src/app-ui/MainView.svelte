@@ -682,7 +682,7 @@
 {#snippet presetSettings()}
 	{#snippet presetButton({preset}: {preset: PresetInfo})}
 		{@const isApplied = preset.preset.isApplied(mandelbrot) ||
-			deepEquals(mandelbrot.behaviors.find(b => b instanceof MandelbrotLerp)?.end, preset.preset)
+			mandelbrot.behaviors.find(b => b instanceof MandelbrotLerp)?.end === preset.preset
 		}
 		<Button
 			className="w-full p-2! rounded! mb-2"

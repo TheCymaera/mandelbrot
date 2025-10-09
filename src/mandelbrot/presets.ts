@@ -11,6 +11,7 @@ export interface PresetInfo {
 export const mandelbrotPreset = new Preset({
 	position: new Vec6(0,0, 0,0, 2,0),
 	zoom: -2.2,
+	escapeRadius: Infinity,
 	simplifiedRotation: new SimplifiedRotation({
 		juliaWise: 0,
 		exponentWise: 0,
@@ -20,6 +21,7 @@ export const mandelbrotPreset = new Preset({
 
 export const juliaPreset = new Preset({
 	...mandelbrotPreset,
+	escapeRadius: Infinity,
 	simplifiedRotation: new SimplifiedRotation({
 		juliaWise: Math.PI / 2,
 		exponentWise: 0,
@@ -30,6 +32,7 @@ export const juliaPreset = new Preset({
 export const xPreset = new Preset({
 	position: new Vec6(0,0, 0,0, 2,0),
 	zoom: -2.2,
+	escapeRadius: Infinity,
 	simplifiedRotation: new SimplifiedRotation({
 		juliaWise: 0,
 		exponentWise: Math.PI / 2,
@@ -59,7 +62,7 @@ const mandelbrotGalaxies = Preset.fromJSON({
 	}
 });
 
-const juliaPetals = Preset.fromJSON({
+const juliaVerticalPetals = Preset.fromJSON({
 	"position": [0.2892743051580473,-0.5197771566971138,0,0,2,0],
 	"zoom": -2,
 	"escapeRadius": "Infinity",
@@ -70,7 +73,7 @@ const juliaPetals = Preset.fromJSON({
 	}
 });
 
-const juliaPetalsHorizontal = Preset.fromJSON({
+const juliaHorizontalPetals = Preset.fromJSON({
 	"position": [-0.623354145014734,0.44195760315614485,0,0,2,0],
 	"zoom": -2,
 	"escapeRadius": "Infinity",
@@ -92,7 +95,7 @@ const juliaCurls = Preset.fromJSON({
 	}
 });
 
-const juliaGalaxies = Preset.fromJSON({
+const juliaVerticalGalaxies = Preset.fromJSON({
 	"position": [0.1839207226160746,-0.6619047237755258,0,0,2,0],
 	"zoom": -2.2,
 	"escapeRadius": "Infinity",
@@ -337,7 +340,7 @@ const crystalGalaxies = Preset.fromJSON({
 });
 
 
-const chaoticInsetCurls = Preset.fromJSON({
+const chaoticInsetTendrils = Preset.fromJSON({
 	"position": [-0.8211703852540941,0,0,0,2.468589188208372,0],
 	"zoom": -2.2,
 	"escapeRadius": "Infinity",
@@ -396,17 +399,17 @@ export const basicPresets: PresetInfo[] = [
 ];
 
 export const mandelbrotPresets: PresetInfo[] = [
-	{ name: "Classic Mandelbrot", preset: new Preset({ ...mandelbrotPreset, escapeRadius: Infinity }) },
+	{ name: "Classic Mandelbrot", preset: mandelbrotPreset },
 	{ name: "Mandelbrot Sword", preset: mandelbrotSword },
 	//{ name: "Mandelbrot Galaxies", preset: mandelbrotGalaxies },
 ];
 
 export const juliaPresets: PresetInfo[] = [
-	{ name: "Black Hole", preset: new Preset({ ...juliaPreset, escapeRadius: Infinity }) },
-	{ name: "Galaxies", preset: juliaGalaxies },
+	{ name: "Black Hole", preset: juliaPreset },
+	{ name: "Vertical Galaxies", preset: juliaVerticalGalaxies },
 	{ name: "Horizontal Galaxies", preset: juliaHorizontalGalaxies },
-	{ name: "Petals Vertical", preset: juliaPetals },
-	{ name: "Petals Horizontal", preset: juliaPetalsHorizontal },
+	{ name: "Vertical Petals", preset: juliaVerticalPetals },
+	{ name: "Horizontal Petals", preset: juliaHorizontalPetals },
 	{ name: "Curls 1", preset: juliaCurls },
 	{ name: "Curls 2", preset: juliaCurls2 },
 	{ name: "Seahorse", preset: juliaSeahorse },
@@ -444,7 +447,7 @@ export const hyperbolicJuliaPresets: PresetInfo[] = [
 
 	{ name: "Crystal Galaxies", preset: crystalGalaxies },
 
-	{ name: "Chaotic Inset Curls", preset: chaoticInsetCurls },
+	{ name: "Chaotic Inset Tendrils", preset: chaoticInsetTendrils },
 	{ name: "Chaotic Circlet", preset: chaoticCirclet },
 
 ];
