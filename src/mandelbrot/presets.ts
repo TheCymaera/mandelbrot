@@ -362,7 +362,7 @@ const chaoticCirclet = Preset.fromJSON({
 	}
 });
 
-const skeletonCurls2 = Preset.fromJSON({
+const dragonBloodForest = Preset.fromJSON({
     "position": [-0.2963771023245796,0.012900000000000002,0,0,1.6707165936355606,0],
 	"zoom": -1.7994011311807947,
 	"escapeRadius": "Infinity",
@@ -391,6 +391,27 @@ const lightTentacle = Preset.fromJSON({
 	}
 });
 
+const mothPreset = Preset.fromJSON({
+    "position": [-1.1987314447274309,0.0020423633579383324,0,0,-3.752841138624812,0],
+    "zoom": -2.97028924052948,
+    "escapeRadius": 2,
+    "simplifiedRotation": {
+        "juliaWise": 1.5707963267948966,
+        "exponentWise": 0,
+        "juliaToExponentWise": 0
+    }
+});
+
+const circletPreset = Preset.fromJSON({
+    "position": [1.0195388521884206,-0.5197771566971138,0,0,-3.752841138624812,0],
+    "zoom": -2.6345199138663564,
+    "escapeRadius": 2,
+    "simplifiedRotation": {
+        "juliaWise": 1.5707963267948966,
+        "exponentWise": 0,
+        "juliaToExponentWise": 0
+    }
+});
 
 export const basicPresets: PresetInfo[] = [
 	{ name: "Mandelbrot", preset: mandelbrotPreset },
@@ -439,8 +460,8 @@ export const hyperbolicJuliaPresets: PresetInfo[] = [
 
 	{ name: "Crystal Seahorse Skeletons", preset: crystalSeahorse },
 
-	{ name: "Skeleton Curls 1", preset: skeletonCurls },
-	{ name: "Skeleton Curls 2", preset: skeletonCurls2 },
+	{ name: "Skeleton Curls", preset: skeletonCurls },
+	{ name: "Dragon Blood Forest", preset: dragonBloodForest },
 
 	{ name: "Lightning Curls", preset: lightningCurls },
 
@@ -454,4 +475,9 @@ export const hyperbolicJuliaPresets: PresetInfo[] = [
 
 export const specialPresets: PresetInfo[] = [
 	{ name: "Kraken", preset: kraken },
+];
+
+export const reducedEscapeRadiusPresets: PresetInfo[] = [
+	{ name: "Moth", preset: mothPreset },
+	{ name: "Circlet", preset: circletPreset },
 ];

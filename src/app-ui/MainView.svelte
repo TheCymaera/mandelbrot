@@ -16,7 +16,7 @@
 	import { githubRepositoryLink } from './links.js';
 	import NavRailButton from '../ui-components/NavRailButton.svelte';
 	import NavRail from '../ui-components/NavRail.svelte';
-	import { basicPresets, hyperbolicJuliaPresets, juliaPresets, mandelbrotPresets, specialPresets, type PresetInfo } from '../mandelbrot/presets.js';
+	import { basicPresets, hyperbolicJuliaPresets, juliaPresets, mandelbrotPresets, reducedEscapeRadiusPresets, specialPresets, type PresetInfo } from '../mandelbrot/presets.js';
 	import { MandelbrotLerp } from '../mandelbrot/MandelbrotLerp.js';
 	import { linear } from 'svelte/easing';
 	import { easeInOutBezier } from '../math/easing.js';
@@ -733,6 +733,7 @@
 		{ name: "Mandelbrot", presets: mandelbrotPresets },
 		{ name: "Julia", presets: juliaPresets },
 		{ name: "Hyperbolic Julia", presets: hyperbolicJuliaPresets },
+		{ name: "Reduced Escape Radius", presets: reducedEscapeRadiusPresets },
 		{ name: "Full Rotation", presets: specialPresets },
 	] as presetSection}
 		<h3 class="text-lg font-semibold mb-2">{presetSection.name}</h3>
