@@ -1,5 +1,4 @@
 import "vite/client";
-import "vite-plugin-arraybuffer/types";
 import "@total-typescript/ts-reset";
 /// <reference types="svelte" />
 

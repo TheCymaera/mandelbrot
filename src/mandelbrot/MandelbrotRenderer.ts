@@ -1,13 +1,14 @@
 import { Mandelbrot6DState } from './MandelbrotState.svelte.js';
 import vertexShader from '../shaders/screenQuad.vert?raw';
 import fragmentShader from '../shaders/mandelbrot.frag?raw';
-import vec6Shader from '../shaders/vec6.glsl?raw';
-import indicatorShader from '../shaders/indicators.glsl?raw';
+import { preprocessShader } from '../utilities/shaderPreprocessor.js';
 import type { Vec6 } from '../math/Vec6.js';
 
-const includes = {
-	"vec6.glsl": vec6Shader,
-	"indicators.glsl": indicatorShader
+const glslModules = import.meta.glob('../shaders/**/*.glsl', { as: 'raw', eager: true });
+const loader = (p: string) => {
+	const key = Object.keys(glslModules).find(k => k.endsWith(p));
+	if (!key) return undefined;
+	return glslModules[key];
 };
 
 
@@ -25,9 +26,9 @@ export class MandelbrotRenderer {
 		this.gl = canvas.getContext('webgl2')!;
 		if (!this.gl) throw new Error('WebGL2 not supported');
 
-		this.program = createProgram(this.gl, 
-				injectShaderIncludes(vertexShader), 
-				injectShaderIncludes(fragmentShader));
+		const vSource = preprocessShader(vertexShader, loader);
+		const fSource = preprocessShader(fragmentShader, loader);
+		this.program = createProgram(this.gl, vSource, fSource);
 		this.uniforms = this.getProgramUniforms(this.gl, this.program);
 
 		this.vao = setUpScreenQuadGeometry(this.gl, this.program);
@@ -127,14 +128,7 @@ export class MandelbrotRenderer {
 	}
 }
 
-function injectShaderIncludes(shaderSource: string): string {
-	const includeRegex = /#include_shader\("([^"]+)"\);/g;
-	return shaderSource.replace(includeRegex, (_, identifier) => {
-		const contents = includes[identifier as keyof typeof includes];
-		if (!contents) throw new Error(`Failed to locate shader: ${identifier}`);
-		return contents;
-	});
-}
+// Preprocessing moved to utilities/shaderPreprocessor
 
 function createShader(gl: WebGL2RenderingContext, type: number, source: string): WebGLShader {
 	const shader = gl.createShader(type);
