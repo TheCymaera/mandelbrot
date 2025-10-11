@@ -93,6 +93,7 @@ void main() {
 		zz = dot(z, z);
 	}
 
+	// Smoothing
 	float smoothIter = float(iterations);
 	if (iterations < maxIterations && u_smoothingEnabled == 1) {
 		float log_abs_z = 0.5 * log(zz);

@@ -599,14 +599,14 @@
 	</div>
 
 	<div class="mb-6">
-		<h3 class="text-lg font-semibold mb-2">Smoothing Settings</h3>
+		<h3 class="text-lg font-semibold mb-2">Smoothing Settings <small class="text-sm opacity-80">(Experimental)</small></h3>
 
 		<p class="text-sm opacity-80 mt-2">
 			These settings are experimental and may change in future versions.
 		</p>
 
 		<CheckboxField 
-			label="Enable Smoothing (Experimental)"
+			label="Enable Smoothing"
 			bind:checked={mandelbrot.smoothingEnabled}
 		/>
 		{#if mandelbrot.smoothingEnabled}
