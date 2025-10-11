@@ -55,7 +55,12 @@ export class Mandelbrot6DState {
 	iterationsPerZoom = $state(50);
 	iterationsMin = $state(100);
 	iterationsMax = $state(5000);
-	escapeRadius = $state(Infinity);
+	bailoutRadius = $state(Infinity);
+
+	// Smoothing controls
+	smoothingEnabled = $state(false);
+	smoothingRadius = $state(2.0);
+	maxBailoutRadiusWhenSmoothingEnabled = $state(100000000);
 
 	orientationMatrix = Mat6.identity();
 
@@ -79,11 +84,6 @@ export class Mandelbrot6DState {
 
 	get eIndicatorEffectiveSize() {
 		return this.#indicatorEffectiveSize(this.eIndicatorSize, this.eIndicatorSetting, xWiseInputMode.horizontalAxis, xWiseInputMode.verticalAxis);
-	}
-
-	get escapeRadiusSquared() {
-		const r = this.escapeRadius;
-		return r * r;
 	}
 
 	get maxIterationsComputed() {

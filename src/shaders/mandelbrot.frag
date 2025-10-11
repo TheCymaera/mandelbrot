@@ -17,7 +17,9 @@ uniform float u_zoom;
 uniform Vec6 u_relativePosition;
 uniform float u_zIndicatorSize;
 uniform float u_eIndicatorSize;
-uniform float u_escapeRadiusSquared;
+uniform float u_bailoutRadiusSquared;
+uniform int u_smoothingEnabled;
+uniform float u_smoothingRadius;
 uniform int u_maxIterations;
 
 struct ColorStop {
@@ -85,11 +87,23 @@ void main() {
 
 	// Mandelbrot iteration
 	int iterations = 0;
-	while (dot(z, z) < u_escapeRadiusSquared && iterations < maxIterations) {
+	float zz = dot(z, z);
+	for (; zz < u_bailoutRadiusSquared && iterations < maxIterations; iterations++) {
 		z = complexPow(z, e) + c;
-		iterations++;
+		zz = dot(z, z);
 	}
-	
-	float colorValue = float(iterations) / float(maxIterations);
+
+	float smoothIter = float(iterations);
+	if (iterations < maxIterations && u_smoothingEnabled == 1) {
+		float log_abs_z = 0.5 * log(zz);
+		log_abs_z = max(log_abs_z, 1e-8);
+		float logR = log(u_smoothingRadius);
+		if (log_abs_z > 0.0) {
+			float nu = log(log_abs_z) / logR;
+			smoothIter = float(iterations) + 1.0 - nu;
+		}
+	}
+
+	float colorValue = clamp(smoothIter / float(maxIterations), 0.0, 1.0);
 	fragColor = sampleGradient(colorValue);
 }

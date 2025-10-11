@@ -10,14 +10,18 @@ export class Preset {
 	orientationMatrix?: Mat6;
 	simplifiedRotation?: SimplifiedRotation;
 	zoom?: number;
-	escapeRadius?: number;
+	bailoutRadius?: number;
+	smoothing?: {
+		smoothingRadius?: number;
+		maxBailoutRadius?: number;
+	};
 
 	constructor(params: Partial<Preset>) {
 		if (params.position) this.position = params.position;
 		if (params.orientationMatrix) this.orientationMatrix = params.orientationMatrix;
 		if (params.simplifiedRotation) this.simplifiedRotation = params.simplifiedRotation;
 		if (params.zoom !== undefined) this.zoom = params.zoom;
-		if (params.escapeRadius !== undefined) this.escapeRadius = params.escapeRadius;
+		if (params.bailoutRadius !== undefined) this.bailoutRadius = params.bailoutRadius;
 	}
 
 	static fromJSON(json: Preset.JSON): Preset {
@@ -26,14 +30,26 @@ export class Preset {
 
 	static fromMaybeJSON(json: unknown): Preset {
 		if (!json || typeof json !== "object") throw new Error("Invalid JSON object");
-		const preset = new Preset({});
 
+		// Backwards compatibility: auto-rename escapeRadius to bailoutRadius
+		if ("escapeRadius" in json && !("bailoutRadius" in json)) {
+			// @ts-expect-error Creating new property
+			json.bailoutRadius = json.escapeRadius;
+			delete json.escapeRadius;
+		}
+
+		const preset = new Preset({});
 		if ("position" in json) preset.position = Vec6.fromMaybeArray(json.position);
 		if ("zoom" in json) preset.zoom = new Number(json.zoom).valueOf();
 		if ("orientationMatrix" in json) preset.orientationMatrix = Mat6.fromMaybeArray(json.orientationMatrix);
 		if ("simplifiedRotation" in json) preset.simplifiedRotation = SimplifiedRotation.fromMaybeObject(json.simplifiedRotation);
-		if ("escapeRadius" in json) {
-			preset.escapeRadius = json.escapeRadius === "Infinity" ? Infinity : new Number(json.escapeRadius).valueOf();
+		if ("bailoutRadius" in json) {
+			preset.bailoutRadius = json.bailoutRadius === "Infinity" ? Infinity : new Number(json.bailoutRadius).valueOf();
+		}
+		if ("smoothing" in json && typeof json.smoothing === "object" && json.smoothing) {
+			preset.smoothing = {};
+			if ("smoothingRadius" in json.smoothing) preset.smoothing.smoothingRadius = new Number(json.smoothing.smoothingRadius).valueOf();
+			if ("maxBailoutRadius" in json.smoothing) preset.smoothing.maxBailoutRadius = new Number(json.smoothing.maxBailoutRadius).valueOf();
 		}
 		return preset;
 	}
@@ -42,7 +58,13 @@ export class Preset {
 		const preset = new Preset({});
 		preset.position = mandelbrot.position;
 		preset.zoom = mandelbrot.zoom;
-		preset.escapeRadius = mandelbrot.escapeRadius;
+		preset.bailoutRadius = mandelbrot.bailoutRadius;
+		if (mandelbrot.smoothingEnabled) {
+			preset.smoothing = {
+				smoothingRadius: mandelbrot.smoothingRadius,
+				maxBailoutRadius: mandelbrot.maxBailoutRadiusWhenSmoothingEnabled,
+			};
+		}
 		if (mandelbrot.simplifiedRotationActive) {
 			preset.simplifiedRotation = mandelbrot.simplifiedRotation;
 		} else {
@@ -55,8 +77,14 @@ export class Preset {
 		const json: Preset.JSON = {};
 		if (this.position) json.position = this.position.toArray();
 		if (this.zoom !== undefined) json.zoom = this.zoom;
-		if (this.escapeRadius !== undefined) {
-			json.escapeRadius = this.escapeRadius === Infinity ? "Infinity" : this.escapeRadius;
+		if (this.bailoutRadius !== undefined) {
+			json.bailoutRadius = this.bailoutRadius === Infinity ? "Infinity" : this.bailoutRadius;
+		}
+		// Include smoothing record only if present
+		if (this.smoothing) {
+			json.smoothing = {};
+			if (this.smoothing.smoothingRadius !== undefined) json.smoothing.smoothingRadius = this.smoothing.smoothingRadius;
+			if (this.smoothing.maxBailoutRadius !== undefined) json.smoothing.maxBailoutRadius = this.smoothing.maxBailoutRadius;
 		}
 		if (this.simplifiedRotation) {
 			json.simplifiedRotation = this.simplifiedRotation.toJSON();
@@ -69,7 +97,12 @@ export class Preset {
 	apply(state: Mandelbrot6DState) {
 		if (this.position) state.position = this.position;
 		if (this.zoom !== undefined) state.zoom = this.zoom;
-		if (this.escapeRadius !== undefined) state.escapeRadius = this.escapeRadius;
+		if (this.bailoutRadius !== undefined) state.bailoutRadius = this.bailoutRadius;
+		if (this.smoothing) {
+			state.smoothingEnabled = true;
+			if (this.smoothing.smoothingRadius !== undefined) state.smoothingRadius = this.smoothing.smoothingRadius;
+			if (this.smoothing.maxBailoutRadius !== undefined) state.maxBailoutRadiusWhenSmoothingEnabled = this.smoothing.maxBailoutRadius;
+		}
 		if (this.simplifiedRotation) {
 			state.simplifiedRotationActive = true;
 			state.simplifiedRotation = this.simplifiedRotation;
@@ -83,7 +116,7 @@ export class Preset {
 	isApplied(state: Mandelbrot6DState): boolean {
 		if (this.position && !state.position.equals(this.position)) return false;
 		if (this.zoom !== undefined && state.zoom !== this.zoom) return false;
-		if (this.escapeRadius !== undefined && state.escapeRadius !== this.escapeRadius) return false;
+		if (this.bailoutRadius !== undefined && state.bailoutRadius !== this.bailoutRadius) return false;
 		if (this.simplifiedRotation) {
 			const isEqual = state.simplifiedRotationActive && state.simplifiedRotation.equals(this.simplifiedRotation);
 			if (!isEqual) return false;
@@ -97,7 +130,7 @@ export class Preset {
 
 	lerp(target: Preset, t: number): Preset {
 		if (t >= 1.0) return target;
-		
+
 		const preset = new Preset({});
 
 		if (this.position && target.position) {
@@ -108,8 +141,13 @@ export class Preset {
 			preset.zoom = lerp(this.zoom, target.zoom, t);
 		}
 
-		if (this.escapeRadius !== undefined && target.escapeRadius !== undefined) {
-			preset.escapeRadius = lerp(this.escapeRadius, target.escapeRadius, t) || Infinity;
+		if (this.bailoutRadius !== undefined && target.bailoutRadius !== undefined) {
+			console.log(this.bailoutRadius, target.bailoutRadius);
+			if (this.bailoutRadius === Infinity || target.bailoutRadius === Infinity) {
+				preset.bailoutRadius = target.bailoutRadius;
+			} else {
+				preset.bailoutRadius = lerp(this.bailoutRadius, target.bailoutRadius, t);
+			}
 		}
 
 		if (this.simplifiedRotation && target.simplifiedRotation) {
@@ -131,6 +169,10 @@ export namespace Preset {
 		orientationMatrix?: number[];
 		simplifiedRotation?: SimplifiedRotation.Params;
 		zoom?: number;
-		escapeRadius?: number | "Infinity";
+		bailoutRadius?: number | "Infinity";
+		smoothing?: {
+			smoothingRadius?: number;
+			maxBailoutRadius?: number;
+		};
 	}
 }

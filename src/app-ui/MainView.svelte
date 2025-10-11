@@ -16,7 +16,7 @@
 	import { githubRepositoryLink } from './links.js';
 	import NavRailButton from '../ui-components/NavRailButton.svelte';
 	import NavRail from '../ui-components/NavRail.svelte';
-	import { basicPresets, hyperbolicJuliaPresets, juliaPresets, mandelbrotPresets, reducedEscapeRadiusPresets, specialPresets, type PresetInfo } from '../mandelbrot/presets.js';
+	import { basicPresets, hyperbolicJuliaPresets, juliaPresets, mandelbrotPresets, reducedBailoutRadiusPresets, specialPresets, type PresetInfo } from '../mandelbrot/presets.js';
 	import { MandelbrotLerp } from '../mandelbrot/MandelbrotLerp.js';
 	import { linear } from 'svelte/easing';
 	import { easeInOutBezier } from '../math/easing.js';
@@ -592,10 +592,36 @@
 
 		<div>
 			<NumberField 
-				label="Escape Radius"
-				bind:value={mandelbrot.escapeRadius}
+				label="Bailout Radius"
+				bind:value={mandelbrot.bailoutRadius}
 			/>
 		</div>
+	</div>
+
+	<div class="mb-6">
+		<h3 class="text-lg font-semibold mb-2">Smoothing Settings</h3>
+
+		<p class="text-sm opacity-80 mt-2">
+			These settings are experimental and may change in future versions.
+		</p>
+
+		<CheckboxField 
+			label="Enable Smoothing (Experimental)"
+			bind:checked={mandelbrot.smoothingEnabled}
+		/>
+		{#if mandelbrot.smoothingEnabled}
+			<NumberField 
+				label="Smoothing Radius"
+				className="mb-2"
+				bind:value={mandelbrot.smoothingRadius}
+			/>
+
+			<NumberField 
+				label="Max Bailout Radius"
+				className="mb-2"
+				bind:value={mandelbrot.maxBailoutRadiusWhenSmoothingEnabled}
+			/>
+		{/if}
 	</div>
 {/snippet}
 
@@ -733,7 +759,7 @@
 		{ name: "Mandelbrot", presets: mandelbrotPresets },
 		{ name: "Julia", presets: juliaPresets },
 		{ name: "Hyperbolic Julia", presets: hyperbolicJuliaPresets },
-		{ name: "Reduced Escape Radius", presets: reducedEscapeRadiusPresets },
+		{ name: "Reduced Bailout Radius", presets: reducedBailoutRadiusPresets },
 		{ name: "Full Rotation", presets: specialPresets },
 	] as presetSection}
 		<h3 class="text-lg font-semibold mb-2">{presetSection.name}</h3>
