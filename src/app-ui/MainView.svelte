@@ -607,6 +607,7 @@
 
 		<CheckboxField 
 			label="Enable Smoothing"
+			className="mb-2"
 			bind:checked={mandelbrot.smoothingEnabled}
 		/>
 		{#if mandelbrot.smoothingEnabled}
@@ -617,7 +618,7 @@
 			/>
 
 			<NumberField 
-				label="Max Bailout Radius"
+				label="Max Bailout Radius When Enabled"
 				className="mb-2"
 				bind:value={mandelbrot.maxBailoutRadiusWhenSmoothingEnabled}
 			/>
