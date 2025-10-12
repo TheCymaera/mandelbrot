@@ -20,4 +20,22 @@ export namespace PlaneMapping {
 		{ axis1: Vec6.Z_INDEX, axis2: Vec6.V_INDEX },
 		{ axis1: Vec6.W_INDEX, axis2: Vec6.U_INDEX },
 	]
+
+	export const all: PlaneMapping[] = [
+		{ axis1: Vec6.X_INDEX, axis2: Vec6.Y_INDEX },
+		{ axis1: Vec6.X_INDEX, axis2: Vec6.Z_INDEX },
+		{ axis1: Vec6.X_INDEX, axis2: Vec6.W_INDEX },
+		{ axis1: Vec6.X_INDEX, axis2: Vec6.V_INDEX },
+		{ axis1: Vec6.X_INDEX, axis2: Vec6.U_INDEX },
+		{ axis1: Vec6.Y_INDEX, axis2: Vec6.Z_INDEX },
+		{ axis1: Vec6.Y_INDEX, axis2: Vec6.W_INDEX },
+		{ axis1: Vec6.Y_INDEX, axis2: Vec6.V_INDEX },
+		{ axis1: Vec6.Y_INDEX, axis2: Vec6.U_INDEX },
+		{ axis1: Vec6.Z_INDEX, axis2: Vec6.W_INDEX },
+		{ axis1: Vec6.Z_INDEX, axis2: Vec6.V_INDEX },
+		{ axis1: Vec6.Z_INDEX, axis2: Vec6.U_INDEX },
+		{ axis1: Vec6.W_INDEX, axis2: Vec6.V_INDEX },
+		{ axis1: Vec6.W_INDEX, axis2: Vec6.U_INDEX },
+		{ axis1: Vec6.V_INDEX, axis2: Vec6.U_INDEX },
+	];
 }

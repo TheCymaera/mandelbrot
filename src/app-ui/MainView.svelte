@@ -134,21 +134,10 @@
 		{ name: "Mandelbrot to Julia", rotation: PlaneMapping.mandelbrotToJulia, isSimplified: true },
 		{ name: "Mandelbrot to Exponent", rotation: PlaneMapping.mandelbrotToExponent, isSimplified: true },
 		{ name: "Julia to Exponent", rotation: PlaneMapping.juliaToExponent, isSimplified: true },
-		{ name: "XY plane", rotation: [{ axis1: Vec6.X_INDEX, axis2: Vec6.Y_INDEX }] },
-		{ name: "XZ plane", rotation: [{ axis1: Vec6.X_INDEX, axis2: Vec6.Z_INDEX }] },
-		{ name: "XW plane", rotation: [{ axis1: Vec6.X_INDEX, axis2: Vec6.W_INDEX }] },
-		{ name: "XV plane", rotation: [{ axis1: Vec6.X_INDEX, axis2: Vec6.V_INDEX }] },
-		{ name: "XU plane", rotation: [{ axis1: Vec6.X_INDEX, axis2: Vec6.U_INDEX }] },
-		{ name: "YZ plane", rotation: [{ axis1: Vec6.Y_INDEX, axis2: Vec6.Z_INDEX }] },
-		{ name: "YW plane", rotation: [{ axis1: Vec6.Y_INDEX, axis2: Vec6.W_INDEX }] },
-		{ name: "YV plane", rotation: [{ axis1: Vec6.Y_INDEX, axis2: Vec6.V_INDEX }] },
-		{ name: "YU plane", rotation: [{ axis1: Vec6.Y_INDEX, axis2: Vec6.U_INDEX }] },
-		{ name: "ZW plane", rotation: [{ axis1: Vec6.Z_INDEX, axis2: Vec6.W_INDEX }] },
-		{ name: "ZV plane", rotation: [{ axis1: Vec6.Z_INDEX, axis2: Vec6.V_INDEX }] },
-		{ name: "ZU plane", rotation: [{ axis1: Vec6.Z_INDEX, axis2: Vec6.U_INDEX }] },
-		{ name: "WV plane", rotation: [{ axis1: Vec6.W_INDEX, axis2: Vec6.V_INDEX }] },
-		{ name: "WU plane", rotation: [{ axis1: Vec6.W_INDEX, axis2: Vec6.U_INDEX }] },
-		{ name: "VU plane", rotation: [{ axis1: Vec6.V_INDEX, axis2: Vec6.U_INDEX }] },
+		...PlaneMapping.all.map(i => ({ 
+			name: getAxisNameFromIndex(i.axis1) + getAxisNameFromIndex(i.axis2) + " Plane",
+			rotation: [i]
+		})),
 	]
 
 
