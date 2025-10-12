@@ -77,14 +77,9 @@ export class MandelbrotRenderer {
 		this.gl.uniform1f(this.uniforms.u_zIndicatorSize, state.zIndicatorEffectiveSize);
 		this.gl.uniform1f(this.uniforms.u_eIndicatorSize, state.eIndicatorEffectiveSize);
 		this.gl.uniform1f(this.uniforms.u_zoom, state.zoomLevel);
-
-		const bailoutRadius = state.smoothingEnabled
-			? Math.min(state.bailoutRadius, state.maxBailoutRadiusWhenSmoothingEnabled)
-			: state.bailoutRadius;
-
-		this.gl.uniform1f(this.uniforms.u_bailoutRadiusSquared, bailoutRadius ** 2);
+		this.gl.uniform1f(this.uniforms.u_bailoutRadiusSquared, state.bailoutRadius ** 2);
 		this.gl.uniform1i(this.uniforms.u_smoothingEnabled, state.smoothingEnabled ? 1 : 0);
-		this.gl.uniform1f(this.uniforms.u_smoothingRadius, state.smoothingRadius);
+		this.gl.uniform1f(this.uniforms.u_logSmoothingRadius, Math.log(state.smoothingRadius));
 		this.gl.uniform1i(this.uniforms.u_maxIterations, state.maxIterationsComputed);
 		this.gl.uniform2f(this.uniforms.u_screenSize, this.canvas.width, this.canvas.height);
 
@@ -125,7 +120,7 @@ export class MandelbrotRenderer {
 			u_eIndicatorSize: requireUniform(gl, program, 'u_eIndicatorSize'),
 			u_bailoutRadiusSquared: requireUniform(gl, program, 'u_bailoutRadiusSquared'),
 			u_smoothingEnabled: requireUniform(gl, program, 'u_smoothingEnabled'),
-			u_smoothingRadius: requireUniform(gl, program, 'u_smoothingRadius'),
+			u_logSmoothingRadius: requireUniform(gl, program, 'u_logSmoothingRadius'),
 			u_maxIterations: requireUniform(gl, program, 'u_maxIterations'),
 			u_zoom: requireUniform(gl, program, 'u_zoom'),
 			u_screenSize: requireUniform(gl, program, 'u_screenSize'),

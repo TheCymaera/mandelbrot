@@ -60,7 +60,6 @@ export class Mandelbrot6DState {
 	// Smoothing controls
 	smoothingEnabled = $state(false);
 	smoothingRadius = $state(2.0);
-	maxBailoutRadiusWhenSmoothingEnabled = $state(100000000);
 
 	orientationMatrix = Mat6.identity();
 

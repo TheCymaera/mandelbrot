@@ -616,12 +616,6 @@
 				className="mb-2"
 				bind:value={mandelbrot.smoothingRadius}
 			/>
-
-			<NumberField 
-				label="Max Bailout Radius When Enabled"
-				className="mb-2"
-				bind:value={mandelbrot.maxBailoutRadiusWhenSmoothingEnabled}
-			/>
 		{/if}
 	</div>
 {/snippet}
