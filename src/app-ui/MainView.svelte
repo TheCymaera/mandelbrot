@@ -2,14 +2,12 @@
 	import { onMount } from 'svelte';
 	import { MandelbrotRenderer } from '../mandelbrot/MandelbrotRenderer.js';
 	import { IndicatorSetting, Mandelbrot6DState } from '../mandelbrot/MandelbrotState.svelte.js';
-	import { inputMap } from '../mandelbrot/inputMap.svelte.js';
 	import NumberField from '../ui-components/NumberField.svelte';
 	import Button from '../ui-components/Button.svelte';
 	import CircleButton from '../ui-components/CircleButton.svelte';
 	import { fa5_brands_github, fa5_solid_bars, fa5_solid_book, fa5_solid_code, fa5_solid_info, fa5_solid_paintBrush, fa5_solid_play, fa5_solid_times, fa6_solid_upDownLeftRight } from 'fontawesome-svgs';
 	import { Vec6 } from '../math/Vec6.js';
 	import { Mat6 } from '../math/Mat6.js';
-	import { juliaToExponentMappings, juliaToExponentMode, juliaWiseInputMode, mandelbrotToExponentMappings, mandelbrotToJuliaMappings, regularInputMode, xWiseInputMode, type InputMode, type PlaneMapping } from '../mandelbrot/inputModes.js';
 	import { deepEquals } from '../utilities/deepEquals.js';
 	import SelectField from '../ui-components/SelectField.svelte';
 	import CheckboxField from '../ui-components/CheckboxField.svelte';
@@ -23,6 +21,9 @@
 	import NavRailSpacer from '../ui-components/NavRailSpacer.svelte';
 	import RangeSlider from '../ui-components/RangeSlider.svelte';
 	import { Preset } from '../mandelbrot/Preset.js';
+	import { InputMode, InputModeOptions } from '../mandelbrot/inputModes.svelte.js';
+	import { keyMap } from '../mandelbrot/keyMap.js';
+	import { PlaneMapping } from '../mandelbrot/PlaneMapping.js';
 	
 	let canvas: HTMLCanvasElement;
 	let renderer: MandelbrotRenderer;
@@ -31,19 +32,35 @@
 	let animationFrame: number;
 	let rotateBy = $state(90);
 
-	inputMap.onHalfSpeed = () => {
-		mandelbrot.speedScale = Math.max(1e-6, mandelbrot.speedScale / 2);
-	};
-
-	inputMap.onDoubleSpeed = () => {
-		mandelbrot.speedScale = Math.min(1e6, mandelbrot.speedScale * 2);
-	};
-
 	let loadPresetLerpDuration = $state(1);
 	let loadPresetLerpEase = $state(easeInOutBezier);
 
 	// Sidebar state
 	let sidebarOpen = $state(true);
+
+
+	keyMap.onHalfSpeed = () => {
+		mandelbrot.speedScale *= 0.5;
+		mandelbrot.speedScale = Math.max(mandelbrot.speedScale, 1e-6);
+	};
+
+	keyMap.onDoubleSpeed = () => {
+		mandelbrot.speedScale *= 2.0;
+		mandelbrot.speedScale = Math.min(mandelbrot.speedScale, 1e6);
+	};
+
+
+	keyMap.onChooseInputMode = (id) => {
+		const modes = [
+			InputModeOptions.REGULAR,
+			InputModeOptions.JULIA,
+			InputModeOptions.X,
+			InputModeOptions.JULIA_TO_X,
+		];
+		const mode = modes[id];
+		if (mode) mandelbrot.inputMode.options = mode();
+	};
+
 
 	onMount(() => {
 		// Create renderer
@@ -52,7 +69,6 @@
 		Object.assign(globalThis, {
 			mandelbrot,
 			renderer,
-			inputMap,
 		});
 		
 		// Set up resize observer for the canvas container
@@ -113,19 +129,11 @@
 		}
 	}
 
-	function getInputModeName(type: InputMode): string {
-		if (type === regularInputMode) return 'Mandelbrot';
-		if (type === juliaWiseInputMode) return 'Julia';
-		if (type === xWiseInputMode) return 'X';
-		if (type === juliaToExponentMode) return 'Julia to X';
-		return 'Custom';
-	}
-
 	const rotations: {name: string, rotation: PlaneMapping[], isSimplified?: boolean }[] = [
-		{ name: "None (Zoom)", rotation: regularInputMode.rotationPlanes, isSimplified: true },
-		{ name: "Mandelbrot to Julia", rotation: mandelbrotToJuliaMappings, isSimplified: true },
-		{ name: "Mandelbrot to Exponent", rotation: mandelbrotToExponentMappings, isSimplified: true },
-		{ name: "Julia to Exponent", rotation: juliaToExponentMappings, isSimplified: true },
+		{ name: "None (Zoom)", rotation: [], isSimplified: true },
+		{ name: "Mandelbrot to Julia", rotation: PlaneMapping.mandelbrotToJulia, isSimplified: true },
+		{ name: "Mandelbrot to Exponent", rotation: PlaneMapping.mandelbrotToExponent, isSimplified: true },
+		{ name: "Julia to Exponent", rotation: PlaneMapping.juliaToExponent, isSimplified: true },
 		{ name: "XY plane", rotation: [{ axis1: Vec6.X_INDEX, axis2: Vec6.Y_INDEX }] },
 		{ name: "XZ plane", rotation: [{ axis1: Vec6.X_INDEX, axis2: Vec6.Z_INDEX }] },
 		{ name: "XW plane", rotation: [{ axis1: Vec6.X_INDEX, axis2: Vec6.W_INDEX }] },
@@ -295,13 +303,17 @@
 		<h3 class="text-lg font-semibold mb-2">Input Mode</h3>
 		
 		<div class="grid grid-cols-3 gap-2 text-sm mb-4">
-			{#each [regularInputMode, juliaWiseInputMode, xWiseInputMode] as type}
+			{#each [
+				{ name: 'Mandelbrot', mode: InputModeOptions.REGULAR() },
+				{ name: 'Julia', mode: InputModeOptions.JULIA() },
+				{ name: 'X', mode: InputModeOptions.X() },
+			] as { name, mode } }
 				<Button 
-					onPress={() => inputMap.mode = type}
+					onPress={() => mandelbrot.inputMode.options = mode}
 					className="w-full p-2! rounded! "
-					variant={deepEquals(inputMap.mode, type) ? 'filled' : 'outlined'}
+					variant={deepEquals(mandelbrot.inputMode.options, mode) ? 'filled' : 'outlined'}
 				>
-					{getInputModeName(type)}
+					{name}
 				</Button>
 			{/each}
 		</div>
@@ -319,7 +331,7 @@
 
 			<div class="flex items-center mb-1">
 				<div>
-					Move {mandelbrot.moveOnLocalAxes ? "Local " : ""}{getAxisName(inputMap.mode.horizontalAxis)}
+					Move {mandelbrot.moveOnLocalAxes ? "Local " : ""}{getAxisName(mandelbrot.inputMode.options.horizontalAxis)}
 				</div>
 
 				{@render kbd("W")}
@@ -328,14 +340,14 @@
 
 			<div class="flex items-center mb-1">
 				<div>
-					Move {mandelbrot.moveOnLocalAxes ? "Local " : ""}{getAxisName(inputMap.mode.verticalAxis)}
+					Move {mandelbrot.moveOnLocalAxes ? "Local " : ""}{getAxisName(mandelbrot.inputMode.options.verticalAxis)}
 				</div>
 				{@render kbd("A")}
 				{@render kbd("S")}
 			</div>
 
 			<div class="flex items-center mb-1">
-				{inputMap.mode.zoomSpeed ? "Zoom In / Out" : "Rotate"}
+				{mandelbrot.inputMode.options.zoomSpeed ? "Zoom In / Out" : "Rotate"}
 
 				{@render kbd("Shift")}
 				{@render kbd("Space")}
@@ -377,8 +389,8 @@
 			<SelectField
 				label="Horizontal Axis"
 				bind:value={
-					()=>getAxisIndex(inputMap.mode.horizontalAxis),
-					(value)=>inputMap.mode.horizontalAxis = Vec6.fromIndex(value)
+					()=>getAxisIndex(mandelbrot.inputMode.options.horizontalAxis),
+					(value)=>mandelbrot.inputMode.options.horizontalAxis = Vec6.fromIndex(value)
 				}
 				options={
 					new Array(6).fill(0).map((_, i) => ({
@@ -391,8 +403,8 @@
 			<SelectField
 				label="Vertical Axis"
 				bind:value={
-					()=>getAxisIndex(inputMap.mode.verticalAxis),
-					(value)=>inputMap.mode.verticalAxis = Vec6.fromIndex(value)
+					()=>getAxisIndex(mandelbrot.inputMode.options.verticalAxis),
+					(value)=>mandelbrot.inputMode.options.verticalAxis = Vec6.fromIndex(value)
 				}
 				options={
 					new Array(6).fill(0).map((_, i) => ({
@@ -417,16 +429,15 @@
 			<SelectField
 				label="Rotational Plane"
 				className="col-span-2"
-				value={inputMap.mode.rotationPlanes}
+				value={rotations.find(r => deepEquals(r.rotation, mandelbrot.inputMode.options.rotationPlaneMappings))!.rotation}
 				options={
 					rotations
 					.filter(i => !mandelbrot.simplifiedRotationActive || i.isSimplified)
 					.map(r => ({ value: r.rotation, label: r.name }))
 				}
 				onChange={e => {
-					inputMap.mode.rotationPlanes = e.value;
-					inputMap.mode.zoomSpeed = e.value.length == 0 ? regularInputMode.zoomSpeed : 0;
-					console.log(inputMap.mode.rotationPlanes, inputMap.mode.zoomSpeed);
+					mandelbrot.inputMode.options.rotationPlaneMappings = e.value;
+					mandelbrot.inputMode.options.zoomSpeed = e.value.length == 0 ? InputModeOptions.REGULAR().zoomSpeed : 0;
 				}}
 			/>
 
@@ -467,10 +478,10 @@
 				/>
 				<Button
 					className="w-20 p-2! rounded!"
-					disabled={inputMap.mode.rotationPlanes.length === 0}
+					disabled={mandelbrot.inputMode.options.rotationPlaneMappings.length === 0}
 					onPress={() => {
 						const inRadians = rotateBy * (Math.PI / 180);
-						mandelbrot.rotateByPlaneMappings(inputMap.mode.rotationPlanes, inRadians)
+						mandelbrot.rotateByPlaneMappings(mandelbrot.inputMode.options.rotationPlaneMappings, inRadians)
 					}}
 				>
 					Rotate

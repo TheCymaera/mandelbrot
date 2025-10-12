@@ -1,11 +1,11 @@
 import { Vec2 } from '../math/Vec2.js';
 import { Vec6 } from '../math/Vec6.js';
 import { Mat6 } from '../math/Mat6.js';
-import { inputMap } from './inputMap.svelte.js';
-import { juliaToExponentMappings, juliaWiseInputMode, mandelbrotToExponentMappings, mandelbrotToJuliaMappings, xWiseInputMode, type PlaneMapping } from './inputModes.js';
+import { InputMode, InputModeOptions } from './inputModes.svelte.js';
 import { mandelbrotPreset } from './presets.js';
 import { expLerpFactor, lerp } from '../math/numbers.js';
 import { SimplifiedRotation } from './SimplifiedRotation.svelte.js';
+import { PlaneMapping } from './PlaneMapping.js';
 
 export enum IndicatorSetting {
 	Always,
@@ -22,6 +22,8 @@ export class Mandelbrot6DState {
 	static readonly RIGHT_VECTOR = new Vec6(1, 0, 0, 0, 0, 0);
 	static readonly UP_VECTOR = new Vec6(0, 1, 0, 0, 0, 0);
 
+	inputMode = $state(new InputMode(InputModeOptions.REGULAR()));
+
 	position = $state(mandelbrotPreset.position!);
 	relativePosition = $state(this.position);
 	velocity = new Vec6(0, 0, 0, 0, 0, 0);
@@ -34,7 +36,10 @@ export class Mandelbrot6DState {
 
 	zoom = $state(mandelbrotPreset.zoom!);
 	zoomVelocity = $state(0);
-	rotationVelocity = $state(0);
+	rotationVelocity = $state({
+		planeMappings: [] as PlaneMapping[],
+		amount: 0,
+	});
 
 	// Indicator settings
 	zIndicatorSize = $state(0.0025);
@@ -78,11 +83,11 @@ export class Mandelbrot6DState {
 	private lastTime = 0;
 
 	get zIndicatorEffectiveSize() {
-		return this.#indicatorEffectiveSize(this.zIndicatorSize, this.zIndicatorSetting, juliaWiseInputMode.horizontalAxis, juliaWiseInputMode.verticalAxis);
+		return this.#indicatorEffectiveSize(this.zIndicatorSize, this.zIndicatorSetting, this.inputMode.canMoveJulia);
 	}
 
 	get eIndicatorEffectiveSize() {
-		return this.#indicatorEffectiveSize(this.eIndicatorSize, this.eIndicatorSetting, xWiseInputMode.horizontalAxis, xWiseInputMode.verticalAxis);
+		return this.#indicatorEffectiveSize(this.eIndicatorSize, this.eIndicatorSetting, this.inputMode.canMoveExponent);
 	}
 
 	get maxIterationsComputed() {
@@ -111,9 +116,9 @@ export class Mandelbrot6DState {
 			this.orientationMatrix = rotationMatrix.multiply(this.orientationMatrix);
 
 			// update simplified rotation
-			const isJuliaWise = mandelbrotToJuliaMappings.some(m => m.axis1 === axis1 && m.axis2 === axis2);
-			const isExponentWise = mandelbrotToExponentMappings.some(m => m.axis1 === axis1 && m.axis2 === axis2);
-			const isJuliaToExponentWise = juliaToExponentMappings.some(m => m.axis1 === axis1 && m.axis2 === axis2);
+			const isJuliaWise = PlaneMapping.mandelbrotToJulia.some(m => m.axis1 === axis1 && m.axis2 === axis2);
+			const isExponentWise = PlaneMapping.mandelbrotToExponent.some(m => m.axis1 === axis1 && m.axis2 === axis2);
+			const isJuliaToExponentWise = PlaneMapping.juliaToExponent.some(m => m.axis1 === axis1 && m.axis2 === axis2);
 
 			if (isJuliaWise) {
 				this.simplifiedRotation.juliaWise += normalizedAmount;
@@ -136,68 +141,40 @@ export class Mandelbrot6DState {
 		this.lastTime = currentTime;
 		
 		// Process input
-		let moveDirection = new Vec2(0, 0);
-		let secondaryMovement = 0;
-		
-		if (inputMap.isMovingLeft) moveDirection.x -= 1.0;
-		if (inputMap.isMovingRight) moveDirection.x += 1.0;
-		
-		if (inputMap.isMovingUp) moveDirection.y += 1.0;
-		if (inputMap.isMovingDown) moveDirection.y -= 1.0;
-		
-		if (inputMap.isSneaking) secondaryMovement -= 1.0;
-		if (inputMap.isJumping) secondaryMovement += 1.0;
-		
-		// Normalize movement direction
-		if (moveDirection.length() > 0.0) {
-			moveDirection = moveDirection.normalize();
-		}
-		
-		// Calculate target velocity
-		const inputMode = inputMap.mode;
-		const horizontalAxis = snapToCardinalDirection(this.moveOnLocalAxes ? 
-			this.orientationMatrix.multiplyVec6(inputMode.horizontalAxis) : 
-			inputMode.horizontalAxis);
-		
-		const verticalAxis = snapToCardinalDirection(this.moveOnLocalAxes ? 
-			this.orientationMatrix.multiplyVec6(inputMode.verticalAxis) : 
-			inputMode.verticalAxis);
-
-		const targetVelocity =
-			horizontalAxis.scale(moveDirection.x)
-			.add(verticalAxis.scale(moveDirection.y))
-			.scale(this.speedScale * inputMode.moveSpeed);
-
-		const targetZoomVelocity = secondaryMovement * inputMode.zoomSpeed * this.speedScale;
-		const targetRotationVelocity = secondaryMovement * inputMode.rotateSpeed * this.speedScale;
+		const movement = this.inputMode.getMovement(this);
+		movement.targetVelocity = movement.targetVelocity.scale(this.speedScale);
+		movement.targetZoomVelocity *= this.speedScale;
+		movement.targetRotationVelocity.amount *= this.speedScale;
 
 		// Accelerate towards target velocity
-		const velocityLerp = expLerpFactor(inputMode.velocityLerp / this.springScale, deltaTime);
-		const rotationVelocityLerp = expLerpFactor(inputMode.rotationalVelocityLerp / this.springScale, deltaTime);
-		this.velocity = this.velocity.lerp(targetVelocity, velocityLerp);
-		this.zoomVelocity = lerp(this.zoomVelocity, targetZoomVelocity, velocityLerp);
-		this.rotationVelocity = lerp(this.rotationVelocity, targetRotationVelocity, rotationVelocityLerp);
+		const velocityLerp = expLerpFactor(movement.velocityLerp / this.springScale, deltaTime);
+		const rotationVelocityLerp = expLerpFactor(movement.rotationalVelocityLerp / this.springScale, deltaTime);
+		this.velocity = this.velocity.lerp(movement.targetVelocity, velocityLerp);
+		this.zoomVelocity = lerp(this.zoomVelocity, movement.targetZoomVelocity, velocityLerp);
+		this.rotationVelocity = {
+			planeMappings: movement.targetRotationVelocity.planeMappings,
+			amount: lerp(this.rotationVelocity.amount, movement.targetRotationVelocity.amount, rotationVelocityLerp),
+		}
 
 		// Apply velocity
 		this.zoom += this.zoomVelocity * deltaTime;
 		this.zoomLevel = Math.pow(2, this.zoom);
 
-		const scaledVelocity = this.velocity.scale(deltaTime / Math.max(this.zoomLevel, inputMode.minMovementScale));
+		const scaledVelocity = this.velocity.scale(deltaTime / this.zoomLevel);
 		this.position = this.position.add(scaledVelocity);
-		//this.position = this.position.add(this.drift.scale(deltaTime));
 
-		this.rotateByPlaneMappings(inputMode.rotationPlanes, this.rotationVelocity * deltaTime, this.rotateOnLocalAxes);
+		this.rotateByPlaneMappings(this.rotationVelocity.planeMappings, this.rotationVelocity.amount * deltaTime, this.rotateOnLocalAxes);
 
 		// Zero velocities if small to prevent constant UI updates
 		const margin = 0.02;
-		if (this.velocity.length() < margin && targetVelocity.isZero()) {
+		if (this.velocity.length() < margin && movement.targetVelocity.isZero()) {
 			this.velocity = new Vec6(0, 0, 0, 0, 0, 0);
 		}
-		if (Math.abs(this.zoomVelocity) < margin && targetZoomVelocity === 0) {
+		if (Math.abs(this.zoomVelocity) < margin && movement.targetZoomVelocity === 0) {
 			this.zoomVelocity = 0;
 		}
-		if (Math.abs(this.rotationVelocity) < margin && targetRotationVelocity === 0) {
-			this.rotationVelocity = 0;
+		if (Math.abs(this.rotationVelocity.amount) < margin && movement.targetRotationVelocity.amount === 0) {
+			this.rotationVelocity.amount = 0;
 		}
 
 		// Update behaviors
@@ -221,21 +198,17 @@ export class Mandelbrot6DState {
 	clearVelocities() {
 		this.velocity = new Vec6(0, 0, 0, 0, 0, 0);
 		this.zoomVelocity = 0;
-		this.rotationVelocity = 0;
+		this.rotationVelocity.amount = 0;
 	}
 
-	#indicatorEffectiveSize(indicatorSize: number, setting: IndicatorSetting, horizontalAxis: Vec6, verticalAxis: Vec6): number {
+	#indicatorEffectiveSize(indicatorSize: number, setting: IndicatorSetting, canMovePlane: boolean): number {
 		if (setting === IndicatorSetting.Never) return 0;
-		if (setting === IndicatorSetting.WhenToolSelected && 
-			(!inputMap.mode.horizontalAxis.equals(horizontalAxis)  &&
-			!inputMap.mode.verticalAxis.equals(verticalAxis))) {
-			return 0;
-		}
+		if (setting === IndicatorSetting.WhenToolSelected && !canMovePlane) return 0;
 		return indicatorSize / this.zoomLevel;
 	}
 }
 
-function snapToCardinalDirection(vec: Vec6, threshold = 0.00001): Vec6 {
+export function snapToCardinalDirection(vec: Vec6, threshold = 0.00001): Vec6 {
 	if (vec.x > 1 - threshold) return Vec6.X();
 	if (vec.x < -1 + threshold) return Vec6.NEG_X();
 	if (vec.y > 1 - threshold) return Vec6.Y();
