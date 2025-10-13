@@ -17,7 +17,6 @@ export class MandelbrotRenderer {
 	private gl: WebGL2RenderingContext;
 	private program: WebGLProgram;
 	private vao: WebGLVertexArrayObject;
-	private resizeObserver: ResizeObserver;
 	
 	private uniforms: ReturnType<typeof this.getProgramUniforms>;
 	
@@ -33,24 +32,14 @@ export class MandelbrotRenderer {
 
 		this.vao = setUpScreenQuadGeometry(this.gl, this.program);
 		
-		// Set up ResizeObserver to handle canvas resizing
-		this.resizeObserver = new ResizeObserver((entries) => {
-			for (const entry of entries) {
-				const { width, height } = entry.contentRect;
-				this.resize(width, height);
-			}
-		});
-		
-		this.resizeObserver.observe(canvas);
-		
 		// Bind program and VAO
 		this.gl.useProgram(this.program);
 		this.gl.bindVertexArray(this.vao);
 	}
 	
 	resize(width: number, height: number): void {
-		this.canvas.width = width;
-		this.canvas.height = height;
+		this.gl.canvas.width = width;
+		this.gl.canvas.height = height;
 		this.gl.viewport(0, 0, width, height);
 	}
 	
@@ -88,17 +77,9 @@ export class MandelbrotRenderer {
 	}
 	
 	destroy(): void {
-		this.resizeObserver.disconnect();
-		
-		if (this.program) {
-			this.gl.deleteProgram(this.program);
-		}
-		if (this.vao) {
-			this.gl.deleteVertexArray(this.vao);
-		}
+		this.gl.deleteProgram(this.program);
+		this.gl.deleteVertexArray(this.vao);
 	}
-
-
 
 	private getProgramUniforms(gl: WebGL2RenderingContext, program: WebGLProgram) {
 		const requireVec6 = (prefix: string) => ({
@@ -124,15 +105,9 @@ export class MandelbrotRenderer {
 			u_maxIterations: requireUniform(gl, program, 'u_maxIterations'),
 			u_zoom: requireUniform(gl, program, 'u_zoom'),
 			u_screenSize: requireUniform(gl, program, 'u_screenSize'),
-
-			//u_zIndicatorRotation: requireUniform(gl, program, 'u_zIndicatorRotation'),
-			//u_eIndicatorRotation: requireUniform(gl, program, 'u_eIndicatorRotation'),
-			//u_renderIndicatorRotation: requireUniform(gl, program, 'u_renderIndicatorRotation'),
 		} as const;
 	}
 }
-
-// Preprocessing moved to utilities/shaderPreprocessor
 
 function createShader(gl: WebGL2RenderingContext, type: number, source: string): WebGLShader {
 	const shader = gl.createShader(type);

@@ -24,6 +24,7 @@
 	import { InputMode, InputModeOptions } from '../mandelbrot/inputModes.svelte.js';
 	import { keyMap } from '../mandelbrot/keyMap.js';
 	import { PlaneMapping } from '../mandelbrot/PlaneMapping.js';
+	import { MediaQuery } from 'svelte/reactivity';
 	
 	let canvas: HTMLCanvasElement;
 	let renderer: MandelbrotRenderer;
@@ -76,10 +77,6 @@
 		const resizeObserver = new ResizeObserver((entries) => {
 			for (const entry of entries) {
 				const { width, height } = entry.contentRect;
-				
-				canvas.width = width;
-				canvas.height = height;
-
 				renderer.resize(width, height);
 				renderer.render(mandelbrot); // re-render to prevent flickering
 			}
@@ -97,7 +94,6 @@
 		animate(0);
 		
 		return () => {
-			resizeObserver.disconnect();
 			cancelAnimationFrame(animationFrame);
 			renderer.destroy();
 		}
@@ -162,6 +158,7 @@
 	let sidebarSection: "controls" | "rendering" | "preset" | "json" | "animation" = $state("controls");
 
 	const showExperimentalFeatures = location.search.includes("experimental");
+	const deviceSupportsHover = new MediaQuery("(hover: hover)");
 </script>
 <main 
 	style:--sidebar-width="450px"
@@ -179,7 +176,8 @@
 		<div class="
 			absolute top-0 left-0 flex flex-col gap-4 p-4
 			w-min h-full
-			md:opacity-0 hover:opacity-100 transition-opacity delay-50 duration-500
+			hover:opacity-100 transition-opacity delay-50 duration-500
+			{deviceSupportsHover.current ? "opacity-0" : ""}
 		">
 			<CircleButton 
 				onPress={()=>(sidebarOpen = !sidebarOpen)}
