@@ -4,11 +4,11 @@ import fragmentShader from '../shaders/mandelbrot.frag?raw';
 import { preprocessShader } from '../utilities/shaderPreprocessor.js';
 import type { Vec6 } from '../math/Vec6.js';
 
-const glslModules = import.meta.glob('../shaders/**/*.glsl', { as: 'raw', eager: true });
+const glslModules = import.meta.glob('../shaders/**/*.glsl', { query: '?raw', import: 'default', eager: true });
 const loader = (p: string) => {
 	const key = Object.keys(glslModules).find(k => k.endsWith(p));
 	if (!key) return undefined;
-	return glslModules[key];
+	return glslModules[key] as string;
 };
 
 
