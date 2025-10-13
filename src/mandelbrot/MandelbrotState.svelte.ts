@@ -98,7 +98,7 @@ export class Mandelbrot6DState {
 	/**
 	 * Rotate the camera by the specified plane mappings and amount.
 	 */
-	rotateByPlaneMappings(mappings: PlaneMapping[], amount: number, local = false) {
+	rotateByPlaneMappings(mappings: PlaneMapping[], amount: number, local: boolean) {
 		if (!amount || mappings.length === 0) return;
 
 		const normalizedAmount = amount / mappings.length;

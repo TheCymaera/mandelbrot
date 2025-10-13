@@ -293,12 +293,12 @@
 		
 		<div class="grid grid-cols-3 gap-2 text-sm mb-4">
 			{#each [
-				{ name: 'Mandelbrot', mode: InputModeOptions.REGULAR() },
-				{ name: 'Julia', mode: InputModeOptions.JULIA() },
-				{ name: 'X', mode: InputModeOptions.X() },
+				{ name: 'Mandelbrot', mode: InputModeOptions.REGULAR },
+				{ name: 'Julia', mode: InputModeOptions.JULIA },
+				{ name: 'X', mode: InputModeOptions.X },
 			] as { name, mode } }
 				<Button 
-					onPress={() => mandelbrot.inputMode.options = mode}
+					onPress={() => mandelbrot.inputMode.options = mode()}
 					className="w-full p-2! rounded! "
 					variant={deepEquals(mandelbrot.inputMode.options, mode) ? 'filled' : 'outlined'}
 				>
@@ -470,7 +470,7 @@
 					disabled={mandelbrot.inputMode.options.rotationPlaneMappings.length === 0}
 					onPress={() => {
 						const inRadians = rotateBy * (Math.PI / 180);
-						mandelbrot.rotateByPlaneMappings(mandelbrot.inputMode.options.rotationPlaneMappings, inRadians)
+						mandelbrot.rotateByPlaneMappings(mandelbrot.inputMode.options.rotationPlaneMappings, inRadians, mandelbrot.rotateOnLocalAxes);
 					}}
 				>
 					Rotate
