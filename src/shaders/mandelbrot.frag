@@ -88,20 +88,25 @@ void main() {
 	// Mandelbrot iteration
 	int iterations = 0;
 	float zz = dot(z, z);
-	float zzPrev = zz;
+
+	float zzSafe = zz; // track last finite zz for smoothing
+	int safeIterations = 0;
+	
 	for (; zz < u_bailoutRadiusSquared && iterations < maxIterations; iterations++) {
 		z = complexPow(z, e) + c;
-
-		zzPrev = zz;
 		zz = dot(z, z);
+		if (!isinf(zz)) {
+			zzSafe = zz;
+			safeIterations = iterations + 1;
+		}
 	}
 
 	// Smoothing
 	float smoothedIterations = float(iterations);
 	if (iterations < maxIterations && u_smoothingEnabled == 1) {
-		float log_zn = log(zzPrev) / 2.0;
+		float log_zn = log(zzSafe) / 2.0;
 		float nu = log(log_zn / u_logSmoothingRadius) / log(2.0);
-		smoothedIterations = float(iterations - 1) + 1.0 - nu;
+		smoothedIterations = float(safeIterations) + 1.0 - nu;
 	}
 
 	float colorValue = clamp(smoothedIterations / float(maxIterations), 0.0, 1.0);

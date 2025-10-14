@@ -21,7 +21,7 @@
 	import NavRailSpacer from '../ui-components/NavRailSpacer.svelte';
 	import RangeSlider from '../ui-components/RangeSlider.svelte';
 	import { Preset } from '../mandelbrot/Preset.js';
-	import { InputMode, InputModeOptions } from '../mandelbrot/inputModes.svelte.js';
+	import { CameraController, CameraControllerOptions } from '../mandelbrot/CameraController.svelte.js';
 	import { keyMap } from '../mandelbrot/keyMap.js';
 	import { PlaneMapping } from '../mandelbrot/PlaneMapping.js';
 	import { MediaQuery } from 'svelte/reactivity';
@@ -41,25 +41,25 @@
 
 
 	keyMap.onHalfSpeed = () => {
-		mandelbrot.speedScale *= 0.5;
-		mandelbrot.speedScale = Math.max(mandelbrot.speedScale, 1e-6);
+		mandelbrot.cameraController.speedScale *= 0.5;
+		mandelbrot.cameraController.speedScale = Math.max(mandelbrot.cameraController.speedScale, 1e-6);
 	};
 
 	keyMap.onDoubleSpeed = () => {
-		mandelbrot.speedScale *= 2.0;
-		mandelbrot.speedScale = Math.min(mandelbrot.speedScale, 1e6);
+		mandelbrot.cameraController.speedScale *= 2.0;
+		mandelbrot.cameraController.speedScale = Math.min(mandelbrot.cameraController.speedScale, 1e6);
 	};
 
 
 	keyMap.onChooseInputMode = (id) => {
 		const modes = [
-			InputModeOptions.REGULAR,
-			InputModeOptions.JULIA,
-			InputModeOptions.X,
-			InputModeOptions.JULIA_TO_X,
+			CameraControllerOptions.REGULAR,
+			CameraControllerOptions.JULIA,
+			CameraControllerOptions.X,
+			CameraControllerOptions.JULIA_TO_X,
 		];
 		const mode = modes[id];
-		if (mode) mandelbrot.inputMode.options = mode();
+		if (mode) mandelbrot.cameraController.options = mode();
 	};
 
 
@@ -118,7 +118,7 @@
 			const data = JSON.parse(jsonDump);
 			const preset = Preset.fromMaybeJSON(data);
 			preset.apply(mandelbrot);
-			mandelbrot.clearVelocities();
+			mandelbrot.cameraController.clearVelocities();
 			jsonError = '';
 		} catch (error) {
 			jsonError = error instanceof Error ? error.message : 'Invalid JSON format';
@@ -291,14 +291,14 @@
 		
 		<div class="grid grid-cols-3 gap-2 text-sm mb-4">
 			{#each [
-				{ name: 'Mandelbrot', mode: InputModeOptions.REGULAR },
-				{ name: 'Julia', mode: InputModeOptions.JULIA },
-				{ name: 'X', mode: InputModeOptions.X },
+				{ name: 'Mandelbrot', mode: CameraControllerOptions.REGULAR },
+				{ name: 'Julia', mode: CameraControllerOptions.JULIA },
+				{ name: 'X', mode: CameraControllerOptions.X },
 			] as { name, mode } }
 				<Button 
-					onPress={() => mandelbrot.inputMode.options = mode()}
+					onPress={() => mandelbrot.cameraController.options = mode()}
 					className="w-full p-2! rounded! "
-					variant={deepEquals(mandelbrot.inputMode.options, mode) ? 'filled' : 'outlined'}
+					variant={deepEquals(mandelbrot.cameraController.options, mode) ? 'filled' : 'outlined'}
 				>
 					{name}
 				</Button>
@@ -318,7 +318,7 @@
 
 			<div class="flex items-center mb-1">
 				<div>
-					Move {mandelbrot.moveOnLocalAxes ? "Local " : ""}{getAxisName(mandelbrot.inputMode.options.horizontalAxis)}
+					Move {mandelbrot.cameraController.moveOnLocalAxes ? "Local " : ""}{getAxisName(mandelbrot.cameraController.options.horizontalAxis)}
 				</div>
 
 				{@render kbd("W")}
@@ -327,14 +327,14 @@
 
 			<div class="flex items-center mb-1">
 				<div>
-					Move {mandelbrot.moveOnLocalAxes ? "Local " : ""}{getAxisName(mandelbrot.inputMode.options.verticalAxis)}
+					Move {mandelbrot.cameraController.moveOnLocalAxes ? "Local " : ""}{getAxisName(mandelbrot.cameraController.options.verticalAxis)}
 				</div>
 				{@render kbd("A")}
 				{@render kbd("S")}
 			</div>
 
 			<div class="flex items-center mb-1">
-				{mandelbrot.inputMode.options.zoomSpeed ? "Zoom In / Out" : "Rotate"}
+				{mandelbrot.cameraController.options.zoomSpeed ? "Zoom In / Out" : "Rotate"}
 
 				{@render kbd("Shift")}
 				{@render kbd("Space")}
@@ -366,18 +366,18 @@
 		<div class="grid grid-cols-2 gap-2 mb-2">
 			<NumberField 
 				label="Speed"
-				bind:value={mandelbrot.speedScale}
+				bind:value={mandelbrot.cameraController.speedScale}
 			/>
 			<NumberField 
 				label="Spring"
-				bind:value={mandelbrot.springScale}
+				bind:value={mandelbrot.cameraController.springScale}
 			/>
 
 			<SelectField
 				label="Horizontal Axis"
 				bind:value={
-					()=>getAxisIndex(mandelbrot.inputMode.options.horizontalAxis),
-					(value)=>mandelbrot.inputMode.options.horizontalAxis = Vec6.fromIndex(value)
+					()=>getAxisIndex(mandelbrot.cameraController.options.horizontalAxis),
+					(value)=>mandelbrot.cameraController.options.horizontalAxis = Vec6.fromIndex(value)
 				}
 				options={
 					new Array(6).fill(0).map((_, i) => ({
@@ -390,8 +390,8 @@
 			<SelectField
 				label="Vertical Axis"
 				bind:value={
-					()=>getAxisIndex(mandelbrot.inputMode.options.verticalAxis),
-					(value)=>mandelbrot.inputMode.options.verticalAxis = Vec6.fromIndex(value)
+					()=>getAxisIndex(mandelbrot.cameraController.options.verticalAxis),
+					(value)=>mandelbrot.cameraController.options.verticalAxis = Vec6.fromIndex(value)
 				}
 				options={
 					new Array(6).fill(0).map((_, i) => ({
@@ -404,7 +404,7 @@
 			<CheckboxField
 				label="Move on Local Axes"
 				className="col-span-2"
-				bind:checked={mandelbrot.moveOnLocalAxes}
+				bind:checked={mandelbrot.cameraController.moveOnLocalAxes}
 			/>
 
 			<CheckboxField
@@ -416,15 +416,15 @@
 			<SelectField
 				label="Rotational Plane"
 				className="col-span-2"
-				value={rotations.find(r => deepEquals(r.rotation, mandelbrot.inputMode.options.rotationPlaneMappings))!.rotation}
+				value={rotations.find(r => deepEquals(r.rotation, mandelbrot.cameraController.options.rotationPlaneMappings))!.rotation}
 				options={
 					rotations
 					.filter(i => !mandelbrot.simplifiedRotationActive || i.isSimplified)
 					.map(r => ({ value: r.rotation, label: r.name }))
 				}
 				onChange={e => {
-					mandelbrot.inputMode.options.rotationPlaneMappings = e.value;
-					mandelbrot.inputMode.options.zoomSpeed = e.value.length == 0 ? InputModeOptions.REGULAR().zoomSpeed : 0;
+					mandelbrot.cameraController.options.rotationPlaneMappings = e.value;
+					mandelbrot.cameraController.options.zoomSpeed = e.value.length == 0 ? CameraControllerOptions.REGULAR().zoomSpeed : 0;
 				}}
 			/>
 
@@ -432,7 +432,7 @@
 				<CheckboxField
 					label="Rotate on Local Axes"
 					className="col-span-2"
-					bind:checked={mandelbrot.rotateOnLocalAxes}
+					bind:checked={mandelbrot.cameraController.rotateOnLocalPlanes}
 				/>
 			{/if}
 		</div>
@@ -465,10 +465,10 @@
 				/>
 				<Button
 					className="w-20 p-2! rounded!"
-					disabled={mandelbrot.inputMode.options.rotationPlaneMappings.length === 0}
+					disabled={mandelbrot.cameraController.options.rotationPlaneMappings.length === 0}
 					onPress={() => {
 						const inRadians = rotateBy * (Math.PI / 180);
-						mandelbrot.rotateByPlaneMappings(mandelbrot.inputMode.options.rotationPlaneMappings, inRadians, mandelbrot.rotateOnLocalAxes);
+						mandelbrot.rotateByPlaneMappings(mandelbrot.cameraController.options.rotationPlaneMappings, inRadians, mandelbrot.cameraController.rotateOnLocalPlanes);
 					}}
 				>
 					Rotate
@@ -714,7 +714,7 @@
 					duration: loadPresetLerpDuration,
 					easing: loadPresetLerpEase,
 				}))
-				mandelbrot.clearVelocities();
+				mandelbrot.cameraController.clearVelocities();
 			}}
 		>
 			{preset.name}

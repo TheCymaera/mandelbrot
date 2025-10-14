@@ -1,9 +1,7 @@
-import { Vec2 } from '../math/Vec2.js';
 import { Vec6 } from '../math/Vec6.js';
 import { Mat6 } from '../math/Mat6.js';
-import { InputMode, InputModeOptions } from './inputModes.svelte.js';
+import { CameraController, CameraControllerOptions } from './CameraController.svelte.js';
 import { mandelbrotPreset } from './presets.js';
-import { expLerpFactor, lerp } from '../math/numbers.js';
 import { SimplifiedRotation } from './SimplifiedRotation.svelte.js';
 import { PlaneMapping } from './PlaneMapping.js';
 
@@ -22,24 +20,26 @@ export class Mandelbrot6DState {
 	static readonly RIGHT_VECTOR = new Vec6(1, 0, 0, 0, 0, 0);
 	static readonly UP_VECTOR = new Vec6(0, 1, 0, 0, 0, 0);
 
-	inputMode = $state(new InputMode(InputModeOptions.REGULAR()));
+	// Default behaviors
+	cameraController = $state(new CameraController(CameraControllerOptions.REGULAR()));
+	behaviors: MandelbrotBehavior[] = [this.cameraController];
 
+	// Camera
 	position = $state(mandelbrotPreset.position!);
 	relativePosition = $state(this.position);
-	velocity = new Vec6(0, 0, 0, 0, 0, 0);
-
-	//drift = $state(new Vec6(0, 0, 0, 0, 0, 0));
-	
 	upVector = $state(Mandelbrot6DState.UP_VECTOR);
 	rightVector = $state(Mandelbrot6DState.RIGHT_VECTOR);
-	zoomLevel = $state(0);
 
 	zoom = $state(mandelbrotPreset.zoom!);
-	zoomVelocity = $state(0);
-	rotationVelocity = $state({
-		planeMappings: [] as PlaneMapping[],
-		amount: 0,
-	});
+	get zoomLevel() { return Math.pow(2, this.zoom); }
+
+	orientationMatrix = Mat6.identity();
+	simplifiedRotationActive = $state(true);
+	simplifiedRotation = $state(new SimplifiedRotation({
+		juliaWise: 0,
+		exponentWise: 0,
+		juliaToExponentWise: 0,
+	}));
 
 	// Indicator settings
 	zIndicatorSize = $state(0.0025);
@@ -48,46 +48,29 @@ export class Mandelbrot6DState {
 	zIndicatorSetting = $state(IndicatorSetting.WhenToolSelected);
 	eIndicatorSetting = $state(IndicatorSetting.WhenToolSelected);
 
-	speedScale = $state(1.0);
-	springScale = $state(1.0);
-
-	// Animation controls
+	// Animation settings
 	animationOffset = $state(new Vec6(.1, .1, 0, 0, 0, 0));
 	animationProgress = $state(0);
 
-	// Iteration controls
+	// Iteration settings
 	iterationsBase = $state(100);
 	iterationsPerZoom = $state(50);
 	iterationsMin = $state(100);
 	iterationsMax = $state(5000);
 	bailoutRadius = $state(Infinity);
 
-	// Smoothing controls
+	// Smoothing settings
 	smoothingEnabled = $state(false);
 	smoothingRadius = $state(2.0);
-
-	orientationMatrix = Mat6.identity();
-
-	moveOnLocalAxes = $state(true);
-	rotateOnLocalAxes = $state(false);
-
-	simplifiedRotationActive = $state(true);
-	simplifiedRotation = $state(new SimplifiedRotation({
-		juliaWise: 0,
-		exponentWise: 0,
-		juliaToExponentWise: 0,
-	}));
-
-	behaviors: MandelbrotBehavior[] = [];
 
 	private lastTime = 0;
 
 	get zIndicatorEffectiveSize() {
-		return this.#indicatorEffectiveSize(this.zIndicatorSize, this.zIndicatorSetting, this.inputMode.canMoveJulia);
+		return this.#indicatorEffectiveSize(this.zIndicatorSize, this.zIndicatorSetting, this.cameraController.canMoveJulia);
 	}
 
 	get eIndicatorEffectiveSize() {
-		return this.#indicatorEffectiveSize(this.eIndicatorSize, this.eIndicatorSetting, this.inputMode.canMoveExponent);
+		return this.#indicatorEffectiveSize(this.eIndicatorSize, this.eIndicatorSetting, this.cameraController.canMoveExponent);
 	}
 
 	get maxIterationsComputed() {
@@ -139,43 +122,6 @@ export class Mandelbrot6DState {
 		// Calculate delta time
 		const deltaTime = (this.lastTime === 0 ? 0 : (currentTime - this.lastTime) / 1000);
 		this.lastTime = currentTime;
-		
-		// Process input
-		const movement = this.inputMode.getMovement(this);
-		movement.targetVelocity = movement.targetVelocity.scale(this.speedScale);
-		movement.targetZoomVelocity *= this.speedScale;
-		movement.targetRotationVelocity.amount *= this.speedScale;
-
-		// Accelerate towards target velocity
-		const velocityLerp = expLerpFactor(movement.velocityLerp / this.springScale, deltaTime);
-		const rotationVelocityLerp = expLerpFactor(movement.rotationalVelocityLerp / this.springScale, deltaTime);
-		this.velocity = this.velocity.lerp(movement.targetVelocity, velocityLerp);
-		this.zoomVelocity = lerp(this.zoomVelocity, movement.targetZoomVelocity, velocityLerp);
-		this.rotationVelocity = {
-			planeMappings: movement.targetRotationVelocity.planeMappings,
-			amount: lerp(this.rotationVelocity.amount, movement.targetRotationVelocity.amount, rotationVelocityLerp),
-		}
-
-		// Apply velocity
-		this.zoom += this.zoomVelocity * deltaTime;
-		this.zoomLevel = Math.pow(2, this.zoom);
-
-		const scaledVelocity = this.velocity.scale(deltaTime / this.zoomLevel);
-		this.position = this.position.add(scaledVelocity);
-
-		this.rotateByPlaneMappings(this.rotationVelocity.planeMappings, this.rotationVelocity.amount * deltaTime, this.rotateOnLocalAxes);
-
-		// Zero velocities if small to prevent constant UI updates
-		const margin = 0.02;
-		if (this.velocity.length() < margin && movement.targetVelocity.isZero()) {
-			this.velocity = new Vec6(0, 0, 0, 0, 0, 0);
-		}
-		if (Math.abs(this.zoomVelocity) < margin && movement.targetZoomVelocity === 0) {
-			this.zoomVelocity = 0;
-		}
-		if (Math.abs(this.rotationVelocity.amount) < margin && movement.targetRotationVelocity.amount === 0) {
-			this.rotationVelocity.amount = 0;
-		}
 
 		// Update behaviors
 		for (const behavior of this.behaviors) {
@@ -193,12 +139,6 @@ export class Mandelbrot6DState {
 		this.rightVector = snapToCardinalDirection(this.orientationMatrix.multiplyVec6(Mandelbrot6DState.RIGHT_VECTOR));
 		this.upVector = snapToCardinalDirection(this.orientationMatrix.multiplyVec6(Mandelbrot6DState.UP_VECTOR));
 		this.relativePosition = this.orientationMatrix.multiplyTransposeVec6(this.position);
-	}
-
-	clearVelocities() {
-		this.velocity = new Vec6(0, 0, 0, 0, 0, 0);
-		this.zoomVelocity = 0;
-		this.rotationVelocity.amount = 0;
 	}
 
 	#indicatorEffectiveSize(indicatorSize: number, setting: IndicatorSetting, canMovePlane: boolean): number {
