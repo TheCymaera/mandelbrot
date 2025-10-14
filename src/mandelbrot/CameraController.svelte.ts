@@ -77,8 +77,8 @@ export class CameraController implements MandelbrotBehavior {
 		amount: 0,
 	}
 
-	speedScale = 1.0;
-	springScale = 1.0;
+	speedScale = $state(1.0);
+	springScale = $state(1.0);
 
 	moveOnLocalAxes = $state(true);
 	rotateOnLocalPlanes = $state(false);
