@@ -298,7 +298,7 @@
 				<Button 
 					onPress={() => mandelbrot.cameraController.options = mode()}
 					className="w-full p-2! rounded! "
-					variant={deepEquals(mandelbrot.cameraController.options, mode) ? 'filled' : 'outlined'}
+					variant={deepEquals(mandelbrot.cameraController.options, mode()) ? 'filled' : 'outlined'}
 				>
 					{name}
 				</Button>
