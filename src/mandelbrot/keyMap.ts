@@ -40,6 +40,11 @@ export const keyMap = new class KeyMap {
 				return;
 			}
 
+			// ignore if info page is open
+			if (window.location.hash === '#info') {
+				return;
+			}
+
 			this.#pressed.add(e.code);
 
 			const movementModes: Record<string, number> = {
