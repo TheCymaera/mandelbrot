@@ -13,7 +13,7 @@ let hash = $state(window.location.hash);
 	<MainView />
 
 	<div 
-		class="fixed inset-0 bg-black/50 flex items-start justify-center p-4 z-50 overflow-y-auto"
+		class="fixed inset-0 bg-black/60 flex items-start justify-center p-4 z-50 overflow-y-auto"
 		class:hidden={hash !== "#info"}
 		transition:fade={{ duration: 200 }}
 	>
@@ -21,7 +21,7 @@ let hash = $state(window.location.hash);
 		<!-- svelte-ignore a11y_no_static_element_interactions --> 
 		<div class="absolute z-0 inset-0" onclick={() => window.location.hash = ""}></div>
 
-		<div class="relative z-10 w-full max-w-2xl my-4 md:mt-4">
+		<div class="relative z-10 w-full max-w-3xl">
 			<AppInfo />
 		</div>
 	</div>

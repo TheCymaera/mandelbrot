@@ -1,6 +1,8 @@
-<script lang="ts">
+<script lang="ts" module>
+	import { fa5_solid_times } from 'fontawesome-svgs';
 	import Button from '../ui-components/Button.svelte';
 	import { githubRepositoryLink, homeLink, youtubeEmbedLink } from './links.js';
+	import IconButton from '../ui-components/IconButton.svelte';
 
 	function syntaxHighlight(colors: readonly (readonly [RegExp, string])[], snippet: string): string {
 		let coloredSnippet = snippet;
@@ -58,18 +60,60 @@ fn Mat6.rotationFromAxisIndices(axisIndex1, axisIndex2, angle) {
 
 // Example usage:
 let rotationMatrix = Mat6.rotationFromAxisIndices(Vec6.X_INDEX, Vec6.Z_INDEX, PI / 2);
-	`).trim()
+	`).trim();
 
+	export function infoWindowOpened() {
+		return window.location.hash === "#info";
+	}
+
+	let xzRot = $state(0);
+	let ywRot = $state(0);
+	const rotTransitionMilliseconds = "500ms ease-in-out";
+
+	const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+	async function playAnimation() {
+		while (true) {
+			xzRot = 0;
+			ywRot = 0;
+			await sleep(2000);
+			xzRot = 90;
+			await sleep(1000);
+			ywRot = 90;
+			await sleep(2000);
+		}
+	}
+
+	playAnimation();
 </script>
 
-<div class="bg-surface text-onSurface p-6 rounded-lg max-w-2xl mx-auto">
-	<h1 class="text-2xl font-bold mb-4">6D Mandelbrot Set Explorer</h1>
+<div class="bg-surface text-onSurface p-6 rounded-lg [text-wrap:pretty]">
+	<h1 class="text-2xl font-bold mb-4 pr-7">6D Mandelbrot Set Explorer</h1>
+
+
+	<IconButton 
+		className="absolute! top-6 right-6 text-xl"
+		label="Close"
+		onPress={() => window.location.hash = ""}
+	>
+		{@html fa5_solid_times}
+	</IconButton>
 
 
 	<div class="mb-4 opacity-80">
 		This tool allows you to explore the Mandelbrot Sets, Julia Sets, and the X Sets in a unified 6-dimensional space by rotating between them.
 	</div>
 
+	<div class="mb-4 opacity-80">
+		It is inspired by <a 
+			href="https://www.youtube.com/watch?v=Ed1gsyxxwM0" 
+			target="_blank" 
+			class="text-primary-500 hover:underline"
+		>2swap's YouTube video</a>.
+	</div>
+
+	<h2 class="text-xl font-bold mb-2">Mathematical Background</h2>
+	
 	<div class="mb-4 opacity-80">
 		A Mandelbrot iteration is defined as:
 		<div class="p-3 block font-mono bg-surfaceContainer text-onSurfaceContainer my-2">
@@ -86,7 +130,7 @@ let rotationMatrix = Mat6.rotationFromAxisIndices(Vec6.X_INDEX, Vec6.Z_INDEX, PI
 			href="https://www.youtube.com/watch?v=Ed1gsyxxwM0" 
 			target="_blank" 
 			class="text-primary-500 hover:underline"
-		>2swap's YouTube video</a>, he coins the "X Set", which varies the exponent e while fixing the other values, thus adding a third orthogonal plane.
+		>2swap's YouTube video</a>, he coins the "X Set", which varies the exponent e while fixing the other values, adding a third orthogonal plane.
 	</div>
 
 	<div class="mb-4 opacity-80">
@@ -104,15 +148,23 @@ let rotationMatrix = Mat6.rotationFromAxisIndices(Vec6.X_INDEX, Vec6.Z_INDEX, PI
 
 	<div class="mb-6 opacity-80">
 		In 6D space, there are 15 cardinal rotation planes:
-		<div class="text-sm opacity-80">XY, XZ, XW, XV, XU, YZ, YW, YV, YU, ZW, ZV, ZU, WV, WU, VU</div>
+		<div class="text-sm opacity-80 mt-1">XY, XZ, XW, XV, XU, YZ, YW, YV, YU, ZW, ZV, ZU, WV, WU, VU</div>
 	</div>
 
 	<div class="mb-6 opacity-80">
-		To figure out what rotation gets us from a Mandelbrot Set to a Julia Set, we can focus on the left and up vectors. In the Mandelbrot Set, they are the X and Y axes, whereas in a Julia Set, they are the Z and W axes. We can map X→Z and Y→W by rotating 90° on the XZ plane and the YW plane.
-	</div>
+		To figure out what rotation gets us from one set to another, we can focus on their right and up vectors: <br>
+		<ul class="list-disc list-inside my-2">
+			<li>Mandelbrot Set: X and Y axes</li>
+			<li>Julia Set: Z and W axes</li>
+			<li>X Set: V and U axes</li>
+		</ul>
 
-	<div class="mb-6 opacity-80">
-		We can apply the same principle to rotate from the Mandelbrot plane toward the exponent plane <small class="opacity-80">(XV, YU)</small>, or from the Julia plane toward the exponent plane <small class="opacity-80">(ZV, WU)</small>.
+		Suppose we want to rotate from the Mandelbrot Set to the Julia Set. We can map X → Z and Y → W by rotating 90° within the XZ plane and the YW plane.
+
+		<div class="flex justify-evenly gap-4 mt-4">
+			{@render visualizePlaneMapping("X","Z", xzRot)}
+			{@render visualizePlaneMapping("Y","W", ywRot)}
+		</div>
 	</div>
 
 	<div class="mb-6 opacity-80">
@@ -121,9 +173,10 @@ let rotationMatrix = Mat6.rotationFromAxisIndices(Vec6.X_INDEX, Vec6.Z_INDEX, PI
 			<div class="p-3 font-mono bg-surfaceContainer text-onSurfaceContainer my-2 overflow-auto whitespace-pre">{@html codeSnippet}</div>
 		<!--</details>-->
 	</div>
+
+	<h2 class="text-xl font-bold mb-2">Minecraft Version</h2>
 	
 	<div class="mb-6">
-		<h2 class="text-xl font-bold mb-2">Minecraft Version</h2>
 		<div class="aspect-video max-w-140 mb-2">
 			<iframe 
 				class="w-full h-full rounded"
@@ -135,9 +188,10 @@ let rotationMatrix = Mat6.rotationFromAxisIndices(Vec6.X_INDEX, Vec6.Z_INDEX, PI
 			</iframe>
 		</div>
 	</div>
+
+	<h2 class="text-xl font-bold mb-2">GitHub Repository</h2>
 	
 	<div class="mb-6">
-		<h2 class="text-xl font-bold mb-2">GitHub Repository</h2>
 		<a 
 			href="{githubRepositoryLink}" 
 			target="_blank" 
@@ -168,3 +222,64 @@ let rotationMatrix = Mat6.rotationFromAxisIndices(Vec6.X_INDEX, Vec6.Z_INDEX, PI
 		</Button>
 	</div>
 </div>
+
+{#snippet visualizePlaneMapping(axis1: string, axis2: string, rotationDeg: number)}
+	<svg 
+		class="relative flex-1 aspect-square max-w-50" 
+		viewBox="-1 -1 2 2" 
+		fill="none" 
+		stroke="currentColor" 
+		stroke-width=".03" 
+		stroke-linecap="round" 
+		stroke-linejoin="round" 
+		aria-hidden="true"
+	>
+		<!-- axis labels -->
+		<g 
+			class="text-onSurface text-sm font-mono"
+			fill="currentColor"
+		>
+			<text 
+				text-anchor="end"
+				dominant-baseline="middle"
+				transform="translate(1, 0) scale(0.012)"
+			>
+				{axis1}
+			</text>
+
+			<text 
+				text-anchor="middle"
+				dominant-baseline="hanging"
+				transform="translate(0, -1) scale(0.012)"
+			>
+				{axis2}
+			</text>
+		</g>
+
+		<!-- grid -->
+		<g  
+			class="text-onSurface/50"
+			stroke-width=".005"
+			transform="scale(.8)"
+		>
+			<line 
+				x1="0" y1="-1" x2="0" y2="1"
+				stroke-width=".005"
+			/>
+
+			<line 
+				x1="-1" y1="0" x2="1" y2="0"
+			/>
+		</g>
+		
+		<!-- arrow -->
+		<g 
+			class="text-primary-400"
+			transform="scale(.7) rotate({-rotationDeg})"
+			style="transition: transform {rotTransitionMilliseconds};"
+		>
+			<path d="M0 0L1 0"></path>
+			<path d="M0.8 -0.2L1 0L0.8 0.2"></path>
+		</g>
+	</svg>
+{/snippet}

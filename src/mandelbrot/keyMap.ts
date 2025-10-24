@@ -1,3 +1,5 @@
+import { infoWindowOpened } from "../app-ui/AppInfo.svelte";
+
 export const keyMap = new class KeyMap {
 	onHalfSpeed: ()=>void = ()=>{};
 	onDoubleSpeed: ()=>void = ()=>{};
@@ -41,7 +43,7 @@ export const keyMap = new class KeyMap {
 			}
 
 			// ignore if info page is open
-			if (window.location.hash === '#info') {
+			if (infoWindowOpened()) {
 				return;
 			}
 
