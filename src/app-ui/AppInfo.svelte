@@ -275,8 +275,10 @@ let rotationMatrix = Mat6.rotationFromAxisIndices(Vec6.X_INDEX, Vec6.Z_INDEX, PI
 		<!-- arrow -->
 		<g 
 			class="text-primary-400"
-			transform="scale(.7) rotate({-rotationDeg})"
-			style="transition: transform {rotTransitionMilliseconds};"
+			style="
+				transition: transform {rotTransitionMilliseconds};
+				transform: scale(.7) rotate({-rotationDeg}deg)
+			"
 		>
 			<path d="M0 0L1 0"></path>
 			<path d="M0.8 -0.2L1 0L0.8 0.2"></path>
