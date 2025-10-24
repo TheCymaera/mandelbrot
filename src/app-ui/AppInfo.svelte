@@ -52,7 +52,7 @@
 		To figure out what rotation gets us from a Mandelbrot Set to a Julia Set, we can focus on the left and up vectors. In the Mandelbrot Set, they are the X and Y axes, whereas in a Julia Set, they are the Z and W axes. We can map X→Z and Y→W by rotating 90° on the XZ plane and the YW plane.
 	</div>
 	<div class="mb-6 opacity-80">
-		We can apply the same principle to rotate from the Mandelbrot plane toward the exponent plane <small class="opacity-80">(XV, YU)</small>, or from the Julia plane toward the exponent plane <small class="opacity-80">(ZW, VU)</small>.
+		We can apply the same principle to rotate from the Mandelbrot plane toward the exponent plane <small class="opacity-80">(XV, YU)</small>, or from the Julia plane toward the exponent plane <small class="opacity-80">(ZV, WU)</small>.
 	</div>
 	
 	<div class="mb-6">

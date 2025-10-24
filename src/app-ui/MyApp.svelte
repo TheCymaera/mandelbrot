@@ -12,20 +12,19 @@ let hash = $state(window.location.hash);
 <svelte:boundary>
 	<MainView />
 
-	{#if hash === "#info"}
-		<div 
-			class="fixed inset-0 bg-black/50 flex items-start justify-center p-4 z-50 overflow-y-auto"
-			transition:fade={{ duration: 200 }}
-		>
-			<!-- svelte-ignore a11y_click_events_have_key_events -->
-			<!-- svelte-ignore a11y_no_static_element_interactions --> 
-			<div class="absolute z-0 inset-0" onclick={() => window.location.hash = ""}></div>
+	<div 
+		class="fixed inset-0 bg-black/50 flex items-start justify-center p-4 z-50 overflow-y-auto"
+		class:hidden={hash !== "#info"}
+		transition:fade={{ duration: 200 }}
+	>
+		<!-- svelte-ignore a11y_click_events_have_key_events -->
+		<!-- svelte-ignore a11y_no_static_element_interactions --> 
+		<div class="absolute z-0 inset-0" onclick={() => window.location.hash = ""}></div>
 
-			<div class="relative z-10 w-full max-w-2xl my-4 md:mt-4">
-				<AppInfo />
-			</div>
+		<div class="relative z-10 w-full max-w-2xl my-4 md:mt-4">
+			<AppInfo />
 		</div>
-	{/if}
+	</div>
 
 	{#snippet failed(error)}
 		<div class="
