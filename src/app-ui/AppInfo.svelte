@@ -78,7 +78,7 @@ let rotationMatrix = Mat6.rotationFromAxisIndices(Vec6.X_INDEX, Vec6.Z_INDEX, PI
 	</div>
 
 	<div class="mb-4 opacity-80">
-		A classic Mandelbrot Set fixes z₁ and e while varying c over the complex plane, whereas Julia Sets fix c, e and vary z₁ instead. These two planes (z,e) can be thought of as orthogonal to each other in a unified 4-dimensional space.
+		A classic Mandelbrot Set fixes z₁ and e while varying c over the complex plane, whereas Julia Sets fix c, e and vary z₁ instead. These two planes (z₁,e) can be thought of as orthogonal to each other in a unified 4-dimensional space.
 	</div>
 
 	<div class="mb-4 opacity-80">
@@ -90,8 +90,7 @@ let rotationMatrix = Mat6.rotationFromAxisIndices(Vec6.X_INDEX, Vec6.Z_INDEX, PI
 	</div>
 
 	<div class="mb-4 opacity-80">
-		Using 6-dimensional right and up vectors, we can slice a 2D viewport through this 6D fractal.
-		Each pixel in the viewport corresponds to a point p in 6D space:
+		Using 6-dimensional right and up vectors, we can slice a 2D viewport through this 6D space. Each pixel in the viewport corresponds to a point p:
 		<div class="p-3 font-mono bg-surfaceContainer text-onSurfaceContainer my-2 overflow-auto whitespace-nowrap">
 			z = p.z + p.w * i <span class="opacity-30">// Julia</span><br>
 			c = p.x + p.y * i <span class="opacity-30">// Mandelbrot</span><br>
