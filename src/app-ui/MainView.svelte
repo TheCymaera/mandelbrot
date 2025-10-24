@@ -350,9 +350,9 @@
 		</div>
 
 		<div class="text-sm mb-3 font-mono bg-surfaceContainer p-2 rounded">
-			z = (p.z, p.w) <span class="opacity-30">// Julia</span><br>
-			c = (p.x, p.y) <span class="opacity-30">// Classic Mandelbrot</span><br>
-			e = (p.v, p.u) <span class="opacity-30">// X</span>
+			z = p.z + p.w * i <span class="opacity-30">// Julia</span><br>
+			c = p.x + p.y * i <span class="opacity-30">// Mandelbrot</span><br>
+			e = p.v + p.u * i <span class="opacity-30">// X</span>
 		</div>
 
 		<div class="text-sm mb-3 font-mono bg-surfaceContainer p-2 rounded">
