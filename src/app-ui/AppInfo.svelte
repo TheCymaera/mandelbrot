@@ -16,27 +16,37 @@
 	}
 
 	const colors = [
-		[/(?<!\.)(matrix|cos|sin|._AXIS|axisIndex.|Math|angle)/g, `text-cyan-100`],
-		[/[0-9]*(?=;)/g, `text-green-200`],
+		// comments
+		[/\/\/.*$/gm, `opacity-30`],
+		// variables
+		[/(matrix|cos|sin|axisIndex.|angle|rotationMatrix)(?!\()/g, `text-cyan-100`],
+		// constants
+		[/._INDEX|PI/g, `text-blue-300`],
+		// numbers
+		[/[0-9]*(?=;|\))/g, `text-green-200`],
+		// named parameters
 		[/(row|col):/g, `text-green-200`],
-		[/let|fn|return/g, `text-cyan-500`],
-		[/(cos|sin|identity|setElement|rotationFromAxisIndices)(?=\()/g, `text-amber-200`],
-		[/Mat6/g, `text-green-500`],
+		// keywords
+		[/const|let|fn|return/g, `text-cyan-500`],
+		// functions
+		[/[A-Za-z0-9]*(?=\()/g, `text-amber-200`],
+		// types/classes
+		[/Mat6|Vec6/g, `text-green-400`],
 	] as const;
 
 
 	const codeSnippet = syntaxHighlight(colors, `
-let X_AXIS = 0;
-let Y_AXIS = 1;
-let Z_AXIS = 2;
-let W_AXIS = 3;
-let V_AXIS = 4;
-let U_AXIS = 5;
+const Vec6.X_INDEX = 0;
+const Vec6.Y_INDEX = 1;
+const Vec6.Z_INDEX = 2;
+const Vec6.W_INDEX = 3;
+const Vec6.V_INDEX = 4;
+const Vec6.U_INDEX = 5;
 
 fn Mat6.rotationFromAxisIndices(axisIndex1, axisIndex2, angle) {
 	let matrix = Mat6.identity();
-	let cos = Math.cos(angle);
-	let sin = Math.sin(angle);
+	let cos = cos(angle);
+	let sin = sin(angle);
 
 	matrix[row: axisIndex1, col: axisIndex1] = cos;
 	matrix[row: axisIndex1, col: axisIndex2] = -sin;
@@ -45,6 +55,9 @@ fn Mat6.rotationFromAxisIndices(axisIndex1, axisIndex2, angle) {
 
 	return matrix;
 }
+
+// Example usage:
+let rotationMatrix = Mat6.rotationFromAxisIndices(Vec6.X_INDEX, Vec6.Z_INDEX, PI / 2);
 	`).trim()
 
 </script>
