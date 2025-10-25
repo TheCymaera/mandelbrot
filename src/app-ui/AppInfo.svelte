@@ -120,7 +120,7 @@ let rotationMatrix = Mat6.rotationFromAxisIndices(Vec6.X_INDEX, Vec6.Z_INDEX, PI
 		>Minecraft version</a> of this explorer.
 	</div>
 
-	<h2 class="text-xl font-bold mb-2">Mathematical Background</h2>
+	<h2 class="text-xl text-onSurface font-bold mb-2">Mathematical Background</h2>
 	
 	<div class="mb-4">
 		A Mandelbrot iteration is defined as:
