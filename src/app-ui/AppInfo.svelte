@@ -1,7 +1,7 @@
 <script lang="ts" module>
 	import { fa5_solid_times } from 'fontawesome-svgs';
 	import Button from '../ui-components/Button.svelte';
-	import { githubRepositoryLink, homeLink, youtubeEmbedLink } from './links.js';
+	import { githubRepositoryLink, homeLink, minecraftYouTubeCode } from './links.js';
 	import IconButton from '../ui-components/IconButton.svelte';
 
 	function syntaxHighlight(colors: readonly (readonly [RegExp, string])[], snippet: string): string {
@@ -27,7 +27,7 @@
 		// numbers
 		[/[0-9]*(?=;|\))/g, `text-green-200`],
 		// named parameters
-		[/(row|col):/g, `text-green-200`],
+		[/(row|column):/g, `text-green-200`],
 		// keywords
 		[/const|let|fn|return/g, `text-cyan-500`],
 		// functions
@@ -50,10 +50,10 @@ fn Mat6.rotationFromAxisIndices(axisIndex1, axisIndex2, angle) {
 	let cos = cos(angle);
 	let sin = sin(angle);
 
-	matrix[row: axisIndex1, col: axisIndex1] = cos;
-	matrix[row: axisIndex1, col: axisIndex2] = -sin;
-	matrix[row: axisIndex2, col: axisIndex1] = sin;
-	matrix[row: axisIndex2, col: axisIndex2] = cos;
+	matrix[row: axisIndex1, column: axisIndex1] = cos;
+	matrix[row: axisIndex1, column: axisIndex2] = -sin;
+	matrix[row: axisIndex2, column: axisIndex1] = sin;
+	matrix[row: axisIndex2, column: axisIndex2] = cos;
 
 	return matrix;
 }
@@ -87,8 +87,8 @@ let rotationMatrix = Mat6.rotationFromAxisIndices(Vec6.X_INDEX, Vec6.Z_INDEX, PI
 	playAnimation();
 </script>
 
-<div class="bg-surface text-onSurface p-6 rounded-lg [text-wrap:pretty]">
-	<h1 class="text-2xl font-bold mb-4 pr-7">6D Mandelbrot Set Explorer</h1>
+<div class="bg-surface text-onSurface/80 p-6 rounded-lg [text-wrap:pretty]">
+	<h1 class="text-2xl text-onSurface font-bold mb-4 pr-7">6D Mandelbrot Set Explorer</h1>
 
 
 	<IconButton 
@@ -100,11 +100,11 @@ let rotationMatrix = Mat6.rotationFromAxisIndices(Vec6.X_INDEX, Vec6.Z_INDEX, PI
 	</IconButton>
 
 
-	<div class="mb-4 opacity-80">
+	<div class="mb-4">
 		This tool allows you to explore the Mandelbrot Sets, Julia Sets, and the X Sets in a unified 6-dimensional space by rotating between them.
 	</div>
 
-	<div class="mb-4 opacity-80">
+	<div class="mb-4">
 		It is inspired by <a 
 			href="https://www.youtube.com/watch?v=Ed1gsyxxwM0" 
 			target="_blank" 
@@ -112,29 +112,41 @@ let rotationMatrix = Mat6.rotationFromAxisIndices(Vec6.X_INDEX, Vec6.Z_INDEX, PI
 		>2swap's YouTube video</a>.
 	</div>
 
+	<div class="mb-4">
+		I also made a <a 
+			href="https://youtu.be/{minecraftYouTubeCode}"
+			target="_blank" 
+			class="text-primary-500 hover:underline"
+		>Minecraft version</a> of this explorer.
+	</div>
+
 	<h2 class="text-xl font-bold mb-2">Mathematical Background</h2>
 	
-	<div class="mb-4 opacity-80">
+	<div class="mb-4">
 		A Mandelbrot iteration is defined as:
+		<div class="p-3 block font-mono bg-surfaceContainer text-onSurfaceContainer my-2">
+			zₙ₊₁ = zₙ ^ 2 + c
+		</div>
+	</div>
+
+	<div class="mb-4">
+		A classic Mandelbrot Set fixes z₁ while varying c over the complex plane, whereas Julia Sets fix c and vary z₁ instead. These two sets are orthogonal slices of a 4-dimensional fractal called the Julibrot.
+	</div>
+
+	<div class="mb-4">
+		In his video, <a 
+			href="https://www.youtube.com/watch?v=Ed1gsyxxwM0" 
+			target="_blank" 
+			class="text-primary-500 hover:underline"
+		>2swap</a> generalizes the Julbrot to 6-dimensions by making the exponent a complex variable e, creating what he coined the "X Set".
 		<div class="p-3 block font-mono bg-surfaceContainer text-onSurfaceContainer my-2">
 			zₙ₊₁ = zₙ ^ e + c
 		</div>
 	</div>
 
-	<div class="mb-4 opacity-80">
-		A classic Mandelbrot Set fixes z₁ and e while varying c over the complex plane, whereas Julia Sets fix c, e and vary z₁ instead. These two planes (z₁,e) can be thought of as orthogonal to each other in a unified 4-dimensional space.
-	</div>
-
-	<div class="mb-4 opacity-80">
-		In <a 
-			href="https://www.youtube.com/watch?v=Ed1gsyxxwM0" 
-			target="_blank" 
-			class="text-primary-500 hover:underline"
-		>2swap's YouTube video</a>, he coins the "X Set", which varies the exponent e while fixing the other values, adding a third orthogonal plane.
-	</div>
-
-	<div class="mb-4 opacity-80">
-		Using 6-dimensional right and up vectors, we can slice a 2D viewport through this 6D space. Each pixel in the viewport corresponds to a point p:
+	<h2 class="text-xl text-onSurface font-bold mb-2">Navigation</h2>
+	<div class="mb-4">
+		Using 6-dimensional vectors, we can slice a 2D viewport through this 6D space. Each pixel in the viewport corresponds to a point p with six coordinates <small class="opacity-80">(x, y, z, w, v, u)</small>, which we can map to the three complex values used in the iteration:
 		<div class="p-3 font-mono bg-surfaceContainer text-onSurfaceContainer my-2 overflow-auto whitespace-nowrap">
 			z = p.z + p.w * i <span class="opacity-30">// Julia</span><br>
 			c = p.x + p.y * i <span class="opacity-30">// Mandelbrot</span><br>
@@ -146,17 +158,17 @@ let rotationMatrix = Mat6.rotationFromAxisIndices(Vec6.X_INDEX, Vec6.Z_INDEX, PI
 		</div>
 	</div>
 
-	<div class="mb-6 opacity-80">
+	<div class="mb-6">
 		In 6D space, there are 15 cardinal rotation planes:
 		<div class="text-sm opacity-80 mt-1">XY, XZ, XW, XV, XU, YZ, YW, YV, YU, ZW, ZV, ZU, WV, WU, VU</div>
 	</div>
 
-	<div class="mb-6 opacity-80">
-		To figure out what rotation gets us from one set to another, we can focus on their right and up vectors: <br>
+	<div class="mb-6">
+		To figure out what rotation gets us from one set to another, we can pay attention to their right and up vectors: <br>
 		<ul class="list-disc list-inside my-2">
-			<li>Mandelbrot Set: X and Y axes</li>
-			<li>Julia Set: Z and W axes</li>
-			<li>X Set: V and U axes</li>
+			<li>Mandelbrot Set: Right is X, up is Y.</li>
+			<li>Julia Set: Right is Z, up is W.</li>
+			<li>X Set: Right is V, up is U.</li>
 		</ul>
 
 		Suppose we want to rotate from the Mandelbrot Set to the Julia Set. We can map X → Z and Y → W by rotating 90° within the XZ plane and the YW plane.
@@ -167,20 +179,20 @@ let rotationMatrix = Mat6.rotationFromAxisIndices(Vec6.X_INDEX, Vec6.Z_INDEX, PI
 		</div>
 	</div>
 
-	<div class="mb-6 opacity-80">
+	<div class="mb-6">
 		<!--<details class="mb-2 pointer-cursor">-->
 			<div>An easy way to rotate 6D vectors is to use a 6x6 rotation matrix:</div>
 			<div class="p-3 font-mono bg-surfaceContainer text-onSurfaceContainer my-2 overflow-auto whitespace-pre">{@html codeSnippet}</div>
 		<!--</details>-->
 	</div>
 
-	<h2 class="text-xl font-bold mb-2">Minecraft Version</h2>
+	<h2 class="text-xl text-onSurface font-bold mb-2">Minecraft Version</h2>
 	
 	<div class="mb-6">
 		<div class="aspect-video max-w-140 mb-2">
 			<iframe 
 				class="w-full h-full rounded"
-				src="{youtubeEmbedLink}" 
+				src="https://www.youtube.com/embed/{minecraftYouTubeCode}" 
 				title="Minecraft Text Display Models Explanation" 
 				frameborder="0" 
 				allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
@@ -189,7 +201,7 @@ let rotationMatrix = Mat6.rotationFromAxisIndices(Vec6.X_INDEX, Vec6.Z_INDEX, PI
 		</div>
 	</div>
 
-	<h2 class="text-xl font-bold mb-2">GitHub Repository</h2>
+	<h2 class="text-xl text-onSurface font-bold mb-2">GitHub Repository</h2>
 	
 	<div class="mb-6">
 		<a 
@@ -203,7 +215,7 @@ let rotationMatrix = Mat6.rotationFromAxisIndices(Vec6.X_INDEX, Vec6.Z_INDEX, PI
 
 	
 	<div class="mb-6">
-		<h2 class="text-xl font-bold mb-2">Other Tools</h2>
+		<h2 class="text-xl text-onSurface font-bold mb-2">Other Tools</h2>
 		<a 
 			href="{homeLink}" 
 			target="_blank" 
@@ -236,7 +248,7 @@ let rotationMatrix = Mat6.rotationFromAxisIndices(Vec6.X_INDEX, Vec6.Z_INDEX, PI
 	>
 		<!-- axis labels -->
 		<g 
-			class="text-onSurface text-sm font-mono"
+			class="text-onSurface/80 text-sm font-mono"
 			fill="currentColor"
 		>
 			<text 
@@ -253,6 +265,14 @@ let rotationMatrix = Mat6.rotationFromAxisIndices(Vec6.X_INDEX, Vec6.Z_INDEX, PI
 				transform="translate(0, -1) scale(0.012)"
 			>
 				{axis2}
+			</text>
+
+			<text 
+				text-anchor="middle"
+				dominant-baseline="auto"
+				transform="translate(0, 0.97) scale(0.011)"
+			>
+				{axis1}{axis2} Plane
 			</text>
 		</g>
 

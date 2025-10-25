@@ -33,6 +33,8 @@
 	before:transition-opacity
 	hover:before:opacity-10
 	active:before:opacity-20
+
+	cursor-pointer
 	{className}
 "
 >
