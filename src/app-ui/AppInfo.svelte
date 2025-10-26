@@ -164,7 +164,7 @@ let rotationMatrix = Mat6.rotationFromAxisIndices(Vec6.X_INDEX, Vec6.Z_INDEX, PI
 	</div>
 
 	<div class="mb-6">
-		To figure out what how to rotate from one set to another, we can focus on their right and up vectors: <br>
+		To figure out how to rotate from one set to another, we can focus on their right and up vectors: <br>
 		<ul class="list-disc list-inside my-2">
 			<li>Mandelbrot Set: Right is X, up is Y.</li>
 			<li>Julia Set: Right is Z, up is W.</li>
