@@ -29,11 +29,11 @@
 		// named parameters
 		[/(row|column):/g, `text-green-200`],
 		// keywords
-		[/const|let|fn|return/g, `text-cyan-500`],
+		[/static|const|let|fn|return/g, `text-cyan-500`],
 		// functions
 		[/[A-Za-z0-9]*(?=\()/g, `text-amber-200`],
 		// types/classes
-		[/Mat6|Vec6/g, `text-green-400`],
+		[/Mat6|Vec6|float|int/g, `text-green-400`],
 	] as const;
 
 
@@ -45,7 +45,7 @@ const Vec6.W_INDEX = 3;
 const Vec6.V_INDEX = 4;
 const Vec6.U_INDEX = 5;
 
-fn Mat6.rotationFromAxisIndices(axisIndex1, axisIndex2, angle) {
+static fn Mat6.rotationFromAxisIndices(axisIndex1: int, axisIndex2: int, angle: float) {
 	let matrix = Mat6.identity();
 	let cos = cos(angle);
 	let sin = sin(angle);
@@ -101,7 +101,7 @@ let rotationMatrix = Mat6.rotationFromAxisIndices(Vec6.X_INDEX, Vec6.Z_INDEX, PI
 
 
 	<div class="mb-4">
-		This tool allows you to explore the Mandelbrot Sets, Julia Sets, and the X Sets in a unified 6-dimensional space by rotating between them.
+		This tool lets you explore a 6-dimensional generalization of the Mandelbrot Set which contains the classical Mandelbrot Set, Julia Sets, and the X Sets on orthogonal planes.
 	</div>
 
 	<div class="mb-4">
@@ -117,14 +117,14 @@ let rotationMatrix = Mat6.rotationFromAxisIndices(Vec6.X_INDEX, Vec6.Z_INDEX, PI
 			href="https://youtu.be/{minecraftYouTubeCode}"
 			target="_blank" 
 			class="text-primary-500 hover:underline"
-		>Minecraft version</a> of this explorer.
+		>YouTube video</a> in which I create a Minecraft version of this explorer.
 	</div>
 
 	<h2 class="text-xl text-onSurface font-bold mb-2">Mathematical Background</h2>
 	
 	<div class="mb-4">
 		A Mandelbrot iteration is defined as:
-		<div class="p-3 block font-mono bg-surfaceContainer text-onSurfaceContainer my-2">
+		<div class="p-3 block font-mono bg-surfaceContainer text-onSurfaceContainer/75 my-2">
 			zₙ₊₁ = zₙ ^ 2 + c
 		</div>
 	</div>
@@ -138,8 +138,8 @@ let rotationMatrix = Mat6.rotationFromAxisIndices(Vec6.X_INDEX, Vec6.Z_INDEX, PI
 			href="https://www.youtube.com/watch?v=Ed1gsyxxwM0" 
 			target="_blank" 
 			class="text-primary-500 hover:underline"
-		>2swap</a> generalizes the Julbrot to 6-dimensions by making the exponent a complex variable e, creating what he coined the "X Set".
-		<div class="p-3 block font-mono bg-surfaceContainer text-onSurfaceContainer my-2">
+		>2swap</a> generalizes the Julibrot to 6-dimensions by making the exponent a complex variable e, creating what he coined the "X Set".
+		<div class="p-3 block font-mono bg-surfaceContainer text-onSurfaceContainer/75 my-2">
 			zₙ₊₁ = zₙ ^ e + c
 		</div>
 	</div>
@@ -147,13 +147,13 @@ let rotationMatrix = Mat6.rotationFromAxisIndices(Vec6.X_INDEX, Vec6.Z_INDEX, PI
 	<h2 class="text-xl text-onSurface font-bold mb-2">Navigation</h2>
 	<div class="mb-4">
 		Using 6-dimensional vectors, we can slice a 2D viewport through this 6D space. Each pixel in the viewport corresponds to a point p with six coordinates <small class="opacity-80">(x, y, z, w, v, u)</small>, which we can map to the three complex values used in the iteration:
-		<div class="p-3 font-mono bg-surfaceContainer text-onSurfaceContainer my-2 overflow-auto whitespace-nowrap">
+		<div class="p-3 font-mono bg-surfaceContainer text-onSurfaceContainer/75 my-2 overflow-auto whitespace-nowrap">
 			z = p.z + p.w * i <span class="opacity-30">// Julia</span><br>
 			c = p.x + p.y * i <span class="opacity-30">// Mandelbrot</span><br>
 			e = p.v + p.u * i <span class="opacity-30">// X</span>
 		</div>
 
-		<div class="p-3 font-mono bg-surfaceContainer text-onSurfaceContainer my-2">
+		<div class="p-3 font-mono bg-surfaceContainer text-onSurfaceContainer/75 my-2">
 			z = z ^ e + c
 		</div>
 	</div>
@@ -164,7 +164,7 @@ let rotationMatrix = Mat6.rotationFromAxisIndices(Vec6.X_INDEX, Vec6.Z_INDEX, PI
 	</div>
 
 	<div class="mb-6">
-		To figure out what rotation gets us from one set to another, we can pay attention to their right and up vectors: <br>
+		To figure out what how to rotate from one set to another, we can focus on their right and up vectors: <br>
 		<ul class="list-disc list-inside my-2">
 			<li>Mandelbrot Set: Right is X, up is Y.</li>
 			<li>Julia Set: Right is Z, up is W.</li>
@@ -201,7 +201,7 @@ let rotationMatrix = Mat6.rotationFromAxisIndices(Vec6.X_INDEX, Vec6.Z_INDEX, PI
 		</div>
 	</div>
 
-	<h2 class="text-xl text-onSurface font-bold mb-2">GitHub Repository</h2>
+	<h2 class="text-xl text-onSurface font-bold mb-2">Source Code</h2>
 	
 	<div class="mb-6">
 		<a 
