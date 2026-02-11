@@ -28,7 +28,7 @@
 </script>
 <button 
 	bind:this={button}
-	use:buttonBehaviour
+	{@attach buttonBehaviour}
 	type="{type}"
 	class="{className} {buttonVariants[variant]}"
 	onclick={onPress}

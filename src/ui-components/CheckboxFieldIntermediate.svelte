@@ -64,7 +64,7 @@
 		>
 			<helion-checkbox-tick class="grid place-items-center text-xs text-onPrimary" class:Tick_checked={active}>
 				{#if checked !== "indeterminate"}
-					<span class="grid place-items-center mt-[1px]">{@html fa5_solid_check}</span>
+					<span class="grid place-items-center mt-px">{@html fa5_solid_check}</span>
 				{:else}
 					{@html fa5_solid_minus}
 				{/if}
@@ -125,7 +125,7 @@ input:active + * helion-checkbox-splash {
 
 
 input:focus-visible + helion-checkbox-box {
-	outline: 3px solid var(--color-primary-500);
-	outline-offset: 3px;
+	outline: var(--outline-width) solid var(--color-primary-500);
+	outline-offset: var(--outline-width);
 }
 </style>

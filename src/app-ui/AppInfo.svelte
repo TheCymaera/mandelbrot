@@ -87,7 +87,7 @@ let rotationMatrix = Mat6.rotationFromAxisIndices(Vec6.X_INDEX, Vec6.Z_INDEX, PI
 	playAnimation();
 </script>
 
-<div class="bg-surface text-onSurface/80 p-6 rounded-lg [text-wrap:pretty]">
+<div class="bg-surface text-onSurface/80 p-6 rounded-lg text-pretty">
 	<h1 class="text-2xl text-onSurface font-bold mb-4 pr-7">6D Mandelbrot Set Explorer</h1>
 
 

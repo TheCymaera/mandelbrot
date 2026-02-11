@@ -169,8 +169,8 @@
 		absolute transition-all duration-300
 		inset-0
 		{sidebarOpen ? `
-			bottom-[var(--sidebar-height)] md:bottom-0
-			md:left-[var(--sidebar-width)]
+			bottom-(--sidebar-height) md:bottom-0
+			md:left-(--sidebar-width)
 		` : ""}
 	">
 		<div class="
@@ -198,8 +198,8 @@
 	<div 
 		class="
 			absolute bottom-0 left-0 bg-surface transition-transform duration-300
-			w-full h-[var(--sidebar-height)]
-			md:w-[var(--sidebar-width)] md:h-full
+			w-full h-(--sidebar-height)
+			md:w-(--sidebar-width) md:h-full
 			grid grid-cols-[min-content_1fr]
 			{sidebarOpen ? 
 				`translate-x-0 translate-y-0` : 
@@ -297,7 +297,7 @@
 			] as { name, mode } }
 				<Button 
 					onPress={() => mandelbrot.cameraController.options = mode()}
-					className="w-full p-2! rounded! "
+					className="w-full p-2! rounded! transition-[background-color,color,outline-offset]!"
 					variant={deepEquals(mandelbrot.cameraController.options, mode()) ? 'filled' : 'outlined'}
 				>
 					{name}
@@ -639,7 +639,8 @@
 			class="
 				w-full p-3 font-mono whitespace-pre resize-none
 				border-[.08rem] border-containerBorder rounded-md bg-transparent
-				focus-visible:outline-[3px] outline-primary-500 outline-offset-[-3px]
+				outline-offset-[calc(var(--outline-width)*-1)]
+				transition-colors
 			"
 			rows={jsonString.split('\n').length + 1}
 		></textarea>

@@ -26,7 +26,7 @@
 <button 
 	class="{buttonVariants.inkWell} {className} flex flex-col items-center justify-center rounded-full"
 	class:text-primary-500={selected} 
-	use:buttonBehaviour
+	{@attach buttonBehaviour}
 	onclick={onPress} 
 	style:color={color} 
 	disabled={disabled}

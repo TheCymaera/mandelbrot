@@ -2,8 +2,9 @@
 @config '../tailwind.config.js';
 
 @theme static {
-	--fontFamily: Arial, sans-serif; /* 'Noto Sans TC' */
+	--font-sans: Arial, sans-serif; /* 'Noto Sans TC' */
 	--font-mono: 'Courier New', Courier, monospace;
+	--font-main: var(--font-sans);
 
 	--color-primary-50: var(--color-teal-50);
 	--color-primary-100: var(--color-teal-100);
@@ -29,12 +30,8 @@
 	--color-inkWell: #FFFFFF88;
 	--color-containerBorder: #FFFFFF22;
 	--color-divider: #FFFFFF22;
-}
 
-:root {
-	--fontFamily: var(--fontFamily, Arial, sans-serif);
-	background-color: var(--color-surface);
-	color: var(--color-onSurface);
+	--outline-width: 3px;
 }
 
 .SvelteOutlet {
@@ -59,6 +56,11 @@
 		height: 100%;
 		margin: 0px;
 
+		font-family: var(--font-main);
+		background-color: var(--color-surface);
+		color: var(--color-onSurface);
+		accent-color: var(--color-primary-500);
+
 		overflow: hidden;
 		overscroll-behavior: none;
 		-webkit-text-size-adjust: none;
@@ -68,7 +70,12 @@
 	* {
 		min-height: 0;
 		min-width: 0;
+		outline-color: transparent;
+	}
 
+	:where(:focus-visible) {
+		outline: transparent solid var(--outline-width);
+		outline-offset: var(--outline-width);
 		outline-color: var(--color-primary-500);
 	}
 

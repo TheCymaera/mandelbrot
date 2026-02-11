@@ -53,7 +53,7 @@
 </script>
 
 <div class="block {className}">
-	<label class="pl-[var(--radius-md)]" style:display={hideLabel ? "none" : ""} for={id}>
+	<label class="pl-(--radius-md)" style:display={hideLabel ? "none" : ""} for={id}>
 		{label}
 	</label>
 	<div class="inputContainer">
@@ -63,7 +63,7 @@
 			inputmode="decimal"
 			class="
 				w-full px-3 py-2 border-[.08rem] border-containerBorder rounded-md bg-transparent
-				outline-[3px] outline-transparent focus-visible:outline-primary-500 outline-offset-[-3px]
+				outline-offset-[calc(var(--outline-width)*-1)]
 				disabled:opacity-50 transition-colors
 				{boxClassName}
 				{className.includes("absolute") ? "absolute inset-0" : ""}
@@ -84,7 +84,7 @@
 			{@render leadingIcon?.()}
 		</div>
 	</div>
-	<output class="pl-[var(--radius-md)]" style:display={(error || hint) ? "" : "none"}>
+	<output class="pl-(--radius-md)" style:display={(error || hint) ? "" : "none"}>
 		<small class="whitespace-pre {error ? "text-red-500" : "opacity-80"}">{error || hint}</small>
 	</output>
 </div>

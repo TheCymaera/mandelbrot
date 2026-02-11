@@ -11,7 +11,6 @@ border-[.08rem] border-transparent
 
 transition-colors
 
-outline-[3px] outline-transparent focus-visible:outline-primary-500 outline-offset-[3px]
 disabled:opacity-50
 
 not-disabled:cursor-pointer
@@ -31,7 +30,7 @@ data-on:border-transparent!
 
 transition-colors 
 
-outline-[3px] outline-transparent focus-visible:outline-primary-500 outline-offset-[-3px]
+outline-offset-[calc(var(--outline-width)*-1)]
 disabled:opacity-50
 
 not-disabled:cursor-pointer
@@ -47,7 +46,7 @@ data-pressed:bg-inkWell/25
 
 transition-colors
 
-outline-[3px] outline-transparent focus-visible:outline-primary-500 outline-offset-[-3px]
+outline-offset-[calc(var(--outline-width)*-1)]
 disabled:opacity-70
 
 not-disabled:cursor-pointer
@@ -66,14 +65,14 @@ hover:before:opacity-15
 active:before:opacity-25
 data-pressed:before:opacity-25
 
-disabled:before:!opacity-0
+disabled:before:opacity-0!
 data-on:before:bg-primary-500!
 data-on:before:opacity-30!
 
 before:transition-[opacity,background-color]
 transition-colors
 
-outline-[3px] outline-transparent focus-visible:outline-primary-500 outline-offset-[-3px]
+outline-offset-[calc(var(--outline-width)*-1)]
 disabled:opacity-50
 
 not-disabled:cursor-pointer
@@ -94,7 +93,6 @@ export const buttonVariants = {
 export function buttonBehaviour(element: HTMLElement) {
 	const minPressTime = 200;
 
-
 	function press() {
 		element.dataset.pressed = "";
 		setTimeout(() => delete element.dataset.pressed, minPressTime);
@@ -102,9 +100,7 @@ export function buttonBehaviour(element: HTMLElement) {
 
 	element.addEventListener("pointerdown", press);
 
-	return {
-		destroy() {
-			element.removeEventListener("pointerdown", press);
-		}
+	return ()=> {
+		element.removeEventListener("pointerdown", press);
 	}
 }

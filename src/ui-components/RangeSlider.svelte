@@ -30,7 +30,7 @@
 </script>
 
 <div class={className}>
-	<label class="pl-[var(--radius-md)]" style:display={hideLabel ? 'none' : ''} for={id}>
+	<label class="pl-(--radius-md)" style:display={hideLabel ? 'none' : ''} for={id}>
 		{label}
 	</label>
 	<div class="inputContainer">
@@ -45,7 +45,7 @@
 			disabled={disabled}
 		/>
 	</div>
-	<output class="pl-[var(--radius-md)]" style:display={(error || hint) ? '' : 'none'}>
+	<output class="pl-(--radius-md)" style:display={(error || hint) ? '' : 'none'}>
 		<small class={error ? 'text-red-500' : 'opacity-80'}>{error || hint}</small>
 	</output>
 </div>
@@ -66,65 +66,66 @@ input {
 	appearance: none;
 	outline: none;
 	width: 100%;
-}
-input:disabled {
-	opacity: .7;
-}
-input:not(:disabled) {
-	cursor: pointer;
-}
-input::-webkit-slider-runnable-track {
-	width: 100%;
-	height: 7px;
-	border-radius: 7px;
-	background: var(--color-surfaceContainer);
-	border: none;
-}
-input::-moz-range-track {
-	width: 100%;
-	height: 7px;
-	border-radius: 7px;
-	background: var(--color-surfaceContainer);
-	border: none;
-}
-input:hover::-moz-range-track {
-	background: var(--color-surfaceContainer);
-}
-input:hover::-webkit-slider-runnable-track {
-	background: var(--color-surfaceContainer);
-}
-input::-webkit-slider-thumb {
-	margin-top: -7.5px;
-	-webkit-appearance: none;
-	width: 22px;
-	height: 22px;
-	border-radius: 50%;
-	background: var(--color-onSurface);
-	border: .2em solid var(--color-surface);
-	box-sizing: border-box;
-	transition: background-color .1s ease,box-shadow .1s ease;
-}
-input::-moz-range-thumb {
-	width: 22px;
-	height: 22px;
-	border-radius: 50%;
-	background: var(--color-onSurface);
-	border: .2em solid var(--color-surface);
-	box-sizing: border-box;
-	transition: background-color .1s ease,box-shadow .1s ease;
-}
-input:hover:not(:disabled)::-webkit-slider-thumb {
-	background: var(--color-onSurface);
-}
-input:hover:not(:disabled)::-moz-range-thumb {
-	background: var(--color-onSurface);
-}
-input:is(:active,:focus-visible):not(:disabled)::-webkit-slider-thumb {
-	background: var(--color-primary-500);
-	box-shadow: 0 0 0 .15em var(--color-primary-500);
-}
-input:is(:active,:focus-visible):not(:disabled)::-moz-range-thumb {
-	background: var(--color-primary-500);
-	box-shadow: 0 0 0 .15em var(--color-primary-500);
+
+	&:disabled {
+		opacity: .7;
+	}
+	&:not(:disabled) {
+		cursor: pointer;
+	}
+	&::-webkit-slider-runnable-track {
+		width: 100%;
+		height: 7px;
+		border-radius: 7px;
+		background: var(--color-surfaceContainer);
+		border: none;
+	}
+	&::-moz-range-track {
+		width: 100%;
+		height: 7px;
+		border-radius: 7px;
+		background: var(--color-surfaceContainer);
+		border: none;
+	}
+	&:hover::-moz-range-track {
+		background: var(--color-surfaceContainer);
+	}
+	&:hover::-webkit-slider-runnable-track {
+		background: var(--color-surfaceContainer);
+	}
+	&::-webkit-slider-thumb {
+		margin-top: -7.5px;
+		-webkit-appearance: none;
+		width: 22px;
+		height: 22px;
+		border-radius: 50%;
+		background: var(--color-onSurface);
+		border: .2em solid var(--color-surface);
+		box-sizing: border-box;
+		transition: background-color .1s ease,box-shadow .1s ease;
+	}
+	&::-moz-range-thumb {
+		width: 22px;
+		height: 22px;
+		border-radius: 50%;
+		background: var(--color-onSurface);
+		border: .2em solid var(--color-surface);
+		box-sizing: border-box;
+		transition: background-color .1s ease,box-shadow .1s ease;
+	}
+	&:hover:not(:disabled)::-webkit-slider-thumb {
+		background: var(--color-onSurface);
+	}
+	&:hover:not(:disabled)::-moz-range-thumb {
+		background: var(--color-onSurface);
+	}
+	&:is(:active,:focus-visible):not(:disabled)::-webkit-slider-thumb {
+		background: var(--color-primary-500);
+		box-shadow: 0 0 0 .15em var(--color-primary-500);
+	}
+	&:is(:active,:focus-visible):not(:disabled)::-moz-range-thumb {
+		background: var(--color-primary-500);
+		box-shadow: 0 0 0 .15em var(--color-primary-500);
+	}
 }
 </style>

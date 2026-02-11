@@ -24,7 +24,7 @@
 	bg-transparent rounded-full
 	flex flex-col items-center justify-center transition-color duration-200
 
-	focus-visible:outline-[3px] outline-primary-500 outline-offset-[-3px]
+	outline-offset-[calc(var(--outline-width)*-1)]
 	disabled:opacity-30
 
 	before:bg-inkWell 
