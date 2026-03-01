@@ -1,7 +1,6 @@
 <script lang="ts">
 import MainView from "./MainView.svelte";
 import AppInfo from "./AppInfo.svelte";
-import { fade } from "svelte/transition";
 
 let hash = $state(window.location.hash);
 </script>
@@ -13,9 +12,11 @@ let hash = $state(window.location.hash);
 	<MainView />
 
 	<div 
-		class="fixed inset-0 bg-black/60 flex items-start justify-center p-4 z-50 overflow-y-auto"
-		class:hidden={hash !== "#info"}
-		transition:fade={{ duration: 200 }}
+		class="
+			fixed inset-0 bg-black/60 flex items-start justify-center p-4 z-50 overflow-y-auto
+			transition-[opacity,visibility] transition-discrete
+			{hash === "#info" ? "opacity-100 visible" : "opacity-0 invisible"}
+		"
 	>
 		<!-- svelte-ignore a11y_click_events_have_key_events -->
 		<!-- svelte-ignore a11y_no_static_element_interactions --> 
