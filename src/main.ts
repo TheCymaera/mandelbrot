@@ -7,6 +7,9 @@ import { Mat6 } from "./math/Mat6.js";
 import { Vec3 } from "./math/Vec3.js";
 import { Vec2 } from "./math/Vec2.js";
 
+// Fix iOS Safari :active styles.
+document.documentElement.addEventListener("touchstart",()=>undefined);
+
 // mount app
 const element = document.querySelector(".SvelteOutlet")!;
 mount(MyApp, { target: element });
