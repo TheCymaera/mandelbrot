@@ -78,7 +78,9 @@
 		const canvasContainer = canvas.parentElement!;
 		const resizeObserver = new ResizeObserver((entries) => {
 			for (const entry of entries) {
-				const { width, height } = entry.contentRect;
+				const dpr = window.devicePixelRatio || 1;
+				const width = entry.contentRect.width * dpr;
+				const height = entry.contentRect.height * dpr;
 				renderer.resize(width, height);
 				renderer.render(mandelbrot); // re-render to prevent flickering
 			}
