@@ -133,7 +133,14 @@
 		pointerInput.onPointerRelease = ()=>canvas.style.cursor = '';
 
 		pointerInput.onMouseWheelGesture = (event) => {
-			mandelbrot.zoom += event.deltaY * -0.001;
+			const oldPosition = screenPositionToWorldPosition(event.position);
+			
+			mandelbrot.zoom += event.delta.y * -0.001;
+
+			const newPosition = screenPositionToWorldPosition(event.position);
+			const delta = oldPosition.subtract(newPosition);
+			mandelbrot.position = mandelbrot.position.add(delta);
+			mandelbrot.cameraController.zoomVelocity = 0;
 		};
 
 		pointerInput.onDragGesture = (event) => {
@@ -142,10 +149,12 @@
 			const delta = newPosition.subtract(oldPosition).scale(getPointerDirectionSign());
 
 			mandelbrot.position = mandelbrot.position.add(delta);
+			mandelbrot.cameraController.clearVelocities();
 		};
 
 		pointerInput.onPinchGesture = (event) => {
 			const cameraController = mandelbrot.cameraController;
+			mandelbrot.cameraController.clearVelocities();
 
 			const oldMidpoint = screenPositionToWorldPosition(event.previousMidpoint);
 

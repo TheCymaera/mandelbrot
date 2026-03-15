@@ -14,6 +14,11 @@ export interface DragGestureEvent {
 	previous: Vec2
 }
 
+export interface MouseWheelEvent {
+	position: Vec2
+	delta: Vec2
+}
+
 export class PointerInput {
 	readonly #activePointers = new Map<number, Vec2>();
 	readonly #abortController = new AbortController();
@@ -29,30 +34,34 @@ export class PointerInput {
 
 	onPointerCapture: (pointerId: number) => void = () => { };
 	onPointerRelease: (pointerId: number) => void = () => { };
-	onMouseWheelGesture: (event: WheelEvent) => void = () => { };
+	onMouseWheelGesture: (event: MouseWheelEvent) => void = () => { };
+	
+	minPinchDistance = 8;
 
 	constructor(canvas: HTMLCanvasElement) {
 		canvas.style.touchAction = 'none';
 
 		const signal = this.#abortController.signal;
-		canvas.addEventListener('pointerdown', (event) => this.onPointerDown(event), { signal });
-		canvas.addEventListener('pointerup', (event) => this.onPointerEnd(event), { signal });
-		canvas.addEventListener('pointercancel', (event) => this.onPointerEnd(event), { signal });
-		canvas.addEventListener('pointermove', (event) => this.onPointerMove(event), { signal });
-		canvas.addEventListener('lostpointercapture', (event) => this.onPointerEnd(event), { signal });
-		canvas.addEventListener('wheel', (event) => this.onWheel(event), { passive: false, signal });
+		canvas.addEventListener('pointerdown', (event) => this.#onPointerDown(event), { signal });
+		canvas.addEventListener('pointerup', (event) => this.#onPointerEnd(event), { signal });
+		canvas.addEventListener('pointercancel', (event) => this.#onPointerEnd(event), { signal });
+		canvas.addEventListener('pointermove', (event) => this.#onPointerMove(event), { signal });
+		canvas.addEventListener('lostpointercapture', (event) => this.#onPointerEnd(event), { signal });
+		canvas.addEventListener('wheel', (event) => this.#onWheel(event), { passive: false, signal });
 	}
 
 	destroy() {
 		this.#abortController.abort();
 	}
 
-	private onWheel(event: WheelEvent) {
+	#onWheel(event: WheelEvent) {
 		event.preventDefault();
-		this.onMouseWheelGesture(event);
+		const position = new Vec2(event.clientX, event.clientY);
+		const delta = new Vec2(event.deltaX, event.deltaY);
+		this.onMouseWheelGesture({ position, delta });
 	}
 
-	private onPointerDown(event: PointerEvent) {
+	#onPointerDown(event: PointerEvent) {
 		if (!this.pointerFilter(event)) return;
 
 		const element = event.currentTarget as HTMLCanvasElement;
@@ -63,7 +72,7 @@ export class PointerInput {
 		this.#activePointers.set(event.pointerId, new Vec2(event.clientX, event.clientY));
 	}
 
-	private onPointerEnd(event: PointerEvent) {
+	#onPointerEnd(event: PointerEvent) {
 		const element = event.currentTarget as HTMLCanvasElement;
 
 		this.#activePointers.delete(event.pointerId);
@@ -74,8 +83,7 @@ export class PointerInput {
 		}
 	}
 
-	minPinchDistance = 8;
-	private onPointerMove(event: PointerEvent) {
+	#onPointerMove(event: PointerEvent) {
 		// get previous pointers
 		const previous = this.#activePointers.get(event.pointerId);
 		if (!previous) return;
