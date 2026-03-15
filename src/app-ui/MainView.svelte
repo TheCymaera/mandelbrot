@@ -105,36 +105,26 @@
 
 	onMount(()=>{
 		// Pointer input
-		function getPointerDirectionSign(mandelbrot: Mandelbrot6DState) {
+		function getPointerDirectionSign() {
 			const isParallelToScreen =
 				mandelbrot.cameraController.options.horizontalAxis.equals(Vec6.X()) && 
 				mandelbrot.cameraController.options.verticalAxis.equals(Vec6.Y());
 
-			return isParallelToScreen ? 1 : -1;
+			return isParallelToScreen ? -1 : 1;
 		}
 
-		function screenPositionToWorldOffset(mandelbrot: Mandelbrot6DState, position: Vec2, rect: DOMRect) {
-			if (rect.width <= 0 || rect.height <= 0) return Vec6.ZERO();
+		function screenPositionToWorldPosition(position: Vec2) {
+			const rect = canvas.getBoundingClientRect();
 
-			const axes = mandelbrot.cameraController.getMovementAxes(mandelbrot);
-			const directionSign = getPointerDirectionSign(mandelbrot);
 			const aspectRatio = rect.width / rect.height;
 			const normalizedX = ((position.x - rect.left) / rect.width) - 0.5;
 			const normalizedY = 0.5 - ((position.y - rect.top) / rect.height);
 
-			return axes.horizontal.scale((normalizedX * directionSign) / mandelbrot.zoomLevel)
-				.add(axes.vertical.scale((normalizedY * directionSign) / (mandelbrot.zoomLevel * aspectRatio)));
-		}
-
-		function screenDeltaToWorldDelta(mandelbrot: Mandelbrot6DState, delta: Vec2, rect: DOMRect) {
-			if (rect.width <= 0 || rect.height <= 0) return Vec6.ZERO();
-
 			const axes = mandelbrot.cameraController.getMovementAxes(mandelbrot);
-			const directionSign = getPointerDirectionSign(mandelbrot);
-			const scale = directionSign / (rect.width * mandelbrot.zoomLevel);
-
-			return axes.horizontal.scale(-delta.x * scale)
-				.add(axes.vertical.scale(delta.y * scale));
+			const offset = axes.horizontal.scale(normalizedX / mandelbrot.zoomLevel)
+				.add(axes.vertical.scale(normalizedY / (mandelbrot.zoomLevel * aspectRatio)));
+			
+			return offset.add(mandelbrot.position);
 		}
 
 		const pointerInput = new PointerInput(canvas);
@@ -142,32 +132,42 @@
 		pointerInput.onPointerCapture = ()=>canvas.style.cursor = 'grabbing';
 		pointerInput.onPointerRelease = ()=>canvas.style.cursor = '';
 
-		pointerInput.onDragGesture = ({ delta }) => {
-			const rect = canvas.getBoundingClientRect();
-			const movement = screenDeltaToWorldDelta(mandelbrot, delta, rect);
-			mandelbrot.position = mandelbrot.position.add(movement);
-			mandelbrot.cameraController.clearVelocities();
+		pointerInput.onMouseWheelGesture = (event) => {
+			mandelbrot.zoom += event.deltaY * -0.001;
 		};
 
-		pointerInput.onPinchGesture = ({ zoomDelta, angleDelta, previousMidpoint, currentMidpoint }) => {
-			const rect = canvas.getBoundingClientRect();
-			const anchor = mandelbrot.position.add(screenPositionToWorldOffset(mandelbrot, previousMidpoint, rect));
+		pointerInput.onDragGesture = (event) => {
+			const oldPosition = screenPositionToWorldPosition(event.previous);
+			const newPosition = screenPositionToWorldPosition(event.current);
+			const delta = newPosition.subtract(oldPosition).scale(getPointerDirectionSign());
+
+			mandelbrot.position = mandelbrot.position.add(delta);
+		};
+
+		pointerInput.onPinchGesture = (event) => {
 			const cameraController = mandelbrot.cameraController;
 
+			const oldMidpoint = screenPositionToWorldPosition(event.previousMidpoint);
+
+			// zoom (if enabled)
 			if (cameraController.options.zoomSpeed !== 0) {
-				mandelbrot.zoom += zoomDelta;
+				mandelbrot.zoom += event.zoomDelta;
 			}
 
+			// rotate
 			mandelbrot.rotateByPlaneMappings(
 				cameraController.options.rotationPlaneMappings,
-				angleDelta,
+				event.angleDelta,
 				cameraController.rotateOnLocalPlanes,
 			);
 			
-			
-			const newOffset = screenPositionToWorldOffset(mandelbrot, currentMidpoint, rect);
-			mandelbrot.position = anchor.subtract(newOffset);
-			mandelbrot.cameraController.clearVelocities();
+			// pan (if not rotating)
+			if (cameraController.options.rotationPlaneMappings.length === 0) {
+				const newMidpoint = screenPositionToWorldPosition(event.currentMidpoint);
+
+				const delta = oldMidpoint.subtract(newMidpoint);
+				mandelbrot.position = mandelbrot.position.add(delta);
+			}
 		};
 
 		return () => {

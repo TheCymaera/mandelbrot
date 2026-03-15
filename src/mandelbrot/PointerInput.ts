@@ -1,28 +1,22 @@
 import { Vec2 } from "../math/Vec2.js";
 
 export interface PinchGestureEvent {
-	previous: [Vec2, Vec2],
-	current: [Vec2, Vec2],
-	zoomDelta: number,
-	angleDelta: number,
-	previousMidpoint: Vec2,
-	currentMidpoint: Vec2,
+	previous: [Vec2, Vec2]
+	current: [Vec2, Vec2]
+	zoomDelta: number
+	angleDelta: number
+	previousMidpoint: Vec2
+	currentMidpoint: Vec2
 }
 
 export interface DragGestureEvent {
-	current: Vec2,
-	previous: Vec2,
-	delta: Vec2
+	current: Vec2
+	previous: Vec2
 }
 
 export class PointerInput {
 	readonly #activePointers = new Map<number, Vec2>();
-	readonly #handlePointerDown = (event: PointerEvent) => this.onPointerDown(event);
-	readonly #handlePointerUp = (event: PointerEvent) => this.onPointerEnd(event);
-	readonly #handlePointerMove = (event: PointerEvent) => this.onPointerMove(event);
-	readonly #handleLostPointerCapture = (event: PointerEvent) => this.onPointerEnd(event);
-
-	private readonly canvas: HTMLCanvasElement;
+	readonly #abortController = new AbortController();
 
 	pointerFilter = (event: PointerEvent) => {
 		if (event.pointerType === 'mouse') return event.button === 0;
@@ -34,25 +28,28 @@ export class PointerInput {
 	onDragGesture: (event: DragGestureEvent) => void = () => { };
 
 	onPointerCapture: (pointerId: number) => void = () => { };
-	onPointerRelease: (pointerId: number) => void = () => { }
+	onPointerRelease: (pointerId: number) => void = () => { };
+	onMouseWheelGesture: (event: WheelEvent) => void = () => { };
 
 	constructor(canvas: HTMLCanvasElement) {
-		this.canvas = canvas;
-		this.canvas.style.touchAction = 'none';
-		canvas.addEventListener('pointerdown', this.#handlePointerDown);
-		canvas.addEventListener('pointerup', this.#handlePointerUp);
-		canvas.addEventListener('pointercancel', this.#handlePointerUp);
-		canvas.addEventListener('pointermove', this.#handlePointerMove);
-		canvas.addEventListener('lostpointercapture', this.#handleLostPointerCapture);
+		canvas.style.touchAction = 'none';
+
+		const signal = this.#abortController.signal;
+		canvas.addEventListener('pointerdown', (event) => this.onPointerDown(event), { signal });
+		canvas.addEventListener('pointerup', (event) => this.onPointerEnd(event), { signal });
+		canvas.addEventListener('pointercancel', (event) => this.onPointerEnd(event), { signal });
+		canvas.addEventListener('pointermove', (event) => this.onPointerMove(event), { signal });
+		canvas.addEventListener('lostpointercapture', (event) => this.onPointerEnd(event), { signal });
+		canvas.addEventListener('wheel', (event) => this.onWheel(event), { passive: false, signal });
 	}
 
 	destroy() {
-		this.#activePointers.clear();
-		this.canvas.removeEventListener('pointerdown', this.#handlePointerDown);
-		this.canvas.removeEventListener('pointerup', this.#handlePointerUp);
-		this.canvas.removeEventListener('pointercancel', this.#handlePointerUp);
-		this.canvas.removeEventListener('pointermove', this.#handlePointerMove);
-		this.canvas.removeEventListener('lostpointercapture', this.#handleLostPointerCapture);
+		this.#abortController.abort();
+	}
+
+	private onWheel(event: WheelEvent) {
+		event.preventDefault();
+		this.onMouseWheelGesture(event);
 	}
 
 	private onPointerDown(event: PointerEvent) {
@@ -109,8 +106,7 @@ export class PointerInput {
 			this.onPinchGesture({ previous: previousPinch, current: currentPinch, zoomDelta, angleDelta, previousMidpoint, currentMidpoint });
 		} else {
 			// drag gesture
-			const delta = current.clone().subtract(previous);
-			this.onDragGesture({ current, previous, delta });
+			this.onDragGesture({ current, previous });
 		}
 	}
 }
