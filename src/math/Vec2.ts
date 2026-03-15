@@ -50,6 +50,14 @@ export class Vec2 {
 			lerp(this.y, other.y, t)
 		);
 	}
+
+	distanceTo(other: Vec2): number {
+		return this.subtract(other).length();
+	}
+
+	angleTo(other: Vec2): number {
+		return Math.atan2(other.y - this.y, other.x - this.x);
+	}
 	
 	toArray(): [number, number] {
 		return [this.x, this.y];

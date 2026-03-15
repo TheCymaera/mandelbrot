@@ -95,6 +95,18 @@ export class CameraController implements MandelbrotBehavior {
 		return this.options.horizontalAxis.equals(Vec6.V()) && this.options.verticalAxis.equals(Vec6.U());
 	}
 
+	getMovementAxes(mandelbrot: Mandelbrot6DState) {
+		const horizontal = snapToCardinalDirection(this.moveOnLocalAxes ?
+			mandelbrot.orientationMatrix.multiplyVec6(this.options.horizontalAxis) :
+			this.options.horizontalAxis);
+
+		const vertical = snapToCardinalDirection(this.moveOnLocalAxes ?
+			mandelbrot.orientationMatrix.multiplyVec6(this.options.verticalAxis) :
+			this.options.verticalAxis);
+
+		return { horizontal, vertical };
+	}
+
 	update({mandelbrot, deltaTime}: { mandelbrot: Mandelbrot6DState, deltaTime: number}) {
 		// Process input
 		let moveDirection = new Vec2(0, 0);
@@ -114,17 +126,11 @@ export class CameraController implements MandelbrotBehavior {
 			moveDirection = moveDirection.normalize();
 		}
 
-		const horizontalAxis = snapToCardinalDirection(this.moveOnLocalAxes ? 
-			mandelbrot.orientationMatrix.multiplyVec6(this.options.horizontalAxis) : 
-			this.options.horizontalAxis);
-		
-		const verticalAxis = snapToCardinalDirection(this.moveOnLocalAxes ? 
-			mandelbrot.orientationMatrix.multiplyVec6(this.options.verticalAxis) : 
-			this.options.verticalAxis);
+		const axes = this.getMovementAxes(mandelbrot);
 
 		const targetVelocity =
-			horizontalAxis.scale(moveDirection.x)
-			.add(verticalAxis.scale(moveDirection.y))
+			axes.horizontal.scale(moveDirection.x)
+			.add(axes.vertical.scale(moveDirection.y))
 			.scale(this.options.moveSpeed * this.speedScale);
 
 		const targetZoomVelocity = secondaryMovement * this.options.zoomSpeed * this.speedScale;

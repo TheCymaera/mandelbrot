@@ -1,0 +1,122 @@
+import { Vec2 } from "../math/Vec2";
+
+export interface PinchGestureEvent {
+	previous: [Vec2, Vec2],
+	current: [Vec2, Vec2],
+	zoomDelta: number,
+	angleDelta: number,
+	previousMidpoint: Vec2,
+	currentMidpoint: Vec2,
+}
+
+export interface DragGestureEvent {
+	current: Vec2,
+	previous: Vec2,
+	delta: Vec2
+}
+
+export class PointerInput {
+	readonly #activePointers = new Map<number, Vec2>();
+	readonly #handlePointerDown = (event: PointerEvent) => this.onPointerDown(event);
+	readonly #handlePointerUp = (event: PointerEvent) => this.onPointerEnd(event);
+	readonly #handlePointerMove = (event: PointerEvent) => this.onPointerMove(event);
+	readonly #handleLostPointerCapture = (event: PointerEvent) => this.onPointerEnd(event);
+
+	private readonly canvas: HTMLCanvasElement;
+
+	pointerFilter = (event: PointerEvent) => {
+		if (event.pointerType === 'mouse') return event.button === 0;
+		return true;
+	};
+
+	onPinchGesture: (event: PinchGestureEvent) => void = () => { };
+
+	onDragGesture: (event: DragGestureEvent) => void = () => { };
+
+	onPointerCapture: (pointerId: number) => void = () => { };
+	onPointerRelease: (pointerId: number) => void = () => { }
+
+	constructor(canvas: HTMLCanvasElement) {
+		this.canvas = canvas;
+		this.canvas.style.touchAction = 'none';
+		canvas.addEventListener('pointerdown', this.#handlePointerDown);
+		canvas.addEventListener('pointerup', this.#handlePointerUp);
+		canvas.addEventListener('pointercancel', this.#handlePointerUp);
+		canvas.addEventListener('pointermove', this.#handlePointerMove);
+		canvas.addEventListener('lostpointercapture', this.#handleLostPointerCapture);
+	}
+
+	destroy() {
+		this.#activePointers.clear();
+		this.canvas.removeEventListener('pointerdown', this.#handlePointerDown);
+		this.canvas.removeEventListener('pointerup', this.#handlePointerUp);
+		this.canvas.removeEventListener('pointercancel', this.#handlePointerUp);
+		this.canvas.removeEventListener('pointermove', this.#handlePointerMove);
+		this.canvas.removeEventListener('lostpointercapture', this.#handleLostPointerCapture);
+	}
+
+	private onPointerDown(event: PointerEvent) {
+		if (!this.pointerFilter(event)) return;
+
+		const element = event.currentTarget as HTMLCanvasElement;
+
+		event.preventDefault();
+		element.setPointerCapture(event.pointerId);
+		this.onPointerCapture(event.pointerId);
+		this.#activePointers.set(event.pointerId, new Vec2(event.clientX, event.clientY));
+	}
+
+	private onPointerEnd(event: PointerEvent) {
+		const element = event.currentTarget as HTMLCanvasElement;
+
+		this.#activePointers.delete(event.pointerId);
+
+		if (element.hasPointerCapture(event.pointerId)) {
+			element.releasePointerCapture(event.pointerId);
+			this.onPointerRelease(event.pointerId);
+		}
+	}
+
+	minPinchDistance = 8;
+	private onPointerMove(event: PointerEvent) {
+		// get previous pointers
+		const previous = this.#activePointers.get(event.pointerId);
+		if (!previous) return;
+		const previousPinch = coerceTuple2(this.#activePointers.values());
+
+		event.preventDefault();
+
+		// get current pointers
+		const current = new Vec2(event.clientX, event.clientY);
+		this.#activePointers.set(event.pointerId, current);
+		const currentPinch = coerceTuple2(this.#activePointers.values());
+
+		if (previousPinch && currentPinch) {
+			// pinch gesture
+			const previousDistance = previousPinch[0].distanceTo(previousPinch[1]);
+			const currentDistance = currentPinch[0].distanceTo(currentPinch[1]);
+
+			if (previousDistance < this.minPinchDistance) return;
+			if (currentDistance < this.minPinchDistance) return;
+
+			const zoomDelta = Math.log2(currentDistance / previousDistance);
+			const angleDelta = currentPinch[0].angleTo(currentPinch[1]) - 
+				previousPinch[0].angleTo(previousPinch[1]);
+
+			const previousMidpoint = previousPinch[0].clone().lerp(previousPinch[1], .5);
+			const currentMidpoint = currentPinch[0].clone().lerp(currentPinch[1], .5);
+
+			this.onPinchGesture({ previous: previousPinch, current: currentPinch, zoomDelta, angleDelta, previousMidpoint, currentMidpoint });
+		} else {
+			// drag gesture
+			const delta = current.clone().subtract(previous);
+			this.onDragGesture({ current, previous, delta });
+		}
+	}
+}
+
+function coerceTuple2<T>(items: Iterable<T>): [T, T] | undefined {
+	const [first, second] = [...items];
+	if (!first || !second) return undefined;
+	return [first, second];
+}

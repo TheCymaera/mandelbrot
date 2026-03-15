@@ -24,7 +24,9 @@
 	import { CameraController, CameraControllerOptions } from '../mandelbrot/CameraController.svelte.js';
 	import { keyMap } from '../mandelbrot/keyMap.js';
 	import { PlaneMapping } from '../mandelbrot/PlaneMapping.js';
+	import { PointerInput } from '../mandelbrot/PointerInput.js';
 	import { MediaQuery } from 'svelte/reactivity';
+	import type { Vec2 } from '../math/Vec2.js';
 	
 	let canvas: HTMLCanvasElement;
 	let renderer: MandelbrotRenderer;
@@ -98,6 +100,78 @@
 			renderer.destroy();
 		}
 	});
+
+	onMount(()=>{
+		// Pointer input
+		function getPointerDirectionSign(mandelbrot: Mandelbrot6DState) {
+			const isParallelToScreen =
+				mandelbrot.cameraController.options.horizontalAxis.equals(Vec6.X()) && 
+				mandelbrot.cameraController.options.verticalAxis.equals(Vec6.Y());
+
+			return isParallelToScreen ? 1 : -1;
+		}
+
+		function screenPositionToWorldOffset(mandelbrot: Mandelbrot6DState, position: Vec2, rect: DOMRect) {
+			if (rect.width <= 0 || rect.height <= 0) return Vec6.ZERO();
+
+			const axes = mandelbrot.cameraController.getMovementAxes(mandelbrot);
+			const directionSign = getPointerDirectionSign(mandelbrot);
+			const aspectRatio = rect.width / rect.height;
+			const normalizedX = ((position.x - rect.left) / rect.width) - 0.5;
+			const normalizedY = 0.5 - ((position.y - rect.top) / rect.height);
+
+			return axes.horizontal.scale((normalizedX * directionSign) / mandelbrot.zoomLevel)
+				.add(axes.vertical.scale((normalizedY * directionSign) / (mandelbrot.zoomLevel * aspectRatio)));
+		}
+
+		function screenDeltaToWorldDelta(mandelbrot: Mandelbrot6DState, delta: Vec2, rect: DOMRect) {
+			if (rect.width <= 0 || rect.height <= 0) return Vec6.ZERO();
+
+			const axes = mandelbrot.cameraController.getMovementAxes(mandelbrot);
+			const directionSign = getPointerDirectionSign(mandelbrot);
+			const scale = directionSign / (rect.width * mandelbrot.zoomLevel);
+
+			return axes.horizontal.scale(-delta.x * scale)
+				.add(axes.vertical.scale(delta.y * scale));
+		}
+
+		const pointerInput = new PointerInput(canvas);
+
+		pointerInput.onPointerCapture = ()=>canvas.style.cursor = 'grabbing';
+		pointerInput.onPointerRelease = ()=>canvas.style.cursor = '';
+
+		pointerInput.onDragGesture = ({ delta }) => {
+			const rect = canvas.getBoundingClientRect();
+			const movement = screenDeltaToWorldDelta(mandelbrot, delta, rect);
+			mandelbrot.position = mandelbrot.position.add(movement);
+			mandelbrot.cameraController.clearVelocities();
+		};
+
+		pointerInput.onPinchGesture = ({ zoomDelta, angleDelta, previousMidpoint, currentMidpoint }) => {
+			const rect = canvas.getBoundingClientRect();
+			const anchor = mandelbrot.position.add(screenPositionToWorldOffset(mandelbrot, previousMidpoint, rect));
+			const cameraController = mandelbrot.cameraController;
+
+			if (cameraController.options.zoomSpeed !== 0) {
+				mandelbrot.zoom += zoomDelta;
+			}
+
+			mandelbrot.rotateByPlaneMappings(
+				cameraController.options.rotationPlaneMappings,
+				angleDelta,
+				cameraController.rotateOnLocalPlanes,
+			);
+			
+			
+			const newOffset = screenPositionToWorldOffset(mandelbrot, currentMidpoint, rect);
+			mandelbrot.position = anchor.subtract(newOffset);
+			mandelbrot.cameraController.clearVelocities();
+		};
+
+		return () => {
+			pointerInput.destroy();
+		};
+	})
 
 	function prettyPrintJson(data: unknown) {
 		return JSON.stringify(data, function (k, v) {
