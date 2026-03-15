@@ -79,8 +79,8 @@
 		const resizeObserver = new ResizeObserver((entries) => {
 			for (const entry of entries) {
 				const dpr = window.devicePixelRatio || 1;
-				const width = entry.contentRect.width * dpr;
-				const height = entry.contentRect.height * dpr;
+				const width = (entry.contentRect.width * dpr) | 0;
+				const height = (entry.contentRect.height * dpr) | 0;
 				renderer.resize(width, height);
 				renderer.render(mandelbrot); // re-render to prevent flickering
 			}
