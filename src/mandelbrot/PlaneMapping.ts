@@ -1,4 +1,4 @@
-import { Vec6 } from "../math/Vec6";
+import { Vec6 } from "../math/Vec6.js";
 
 export interface PlaneMapping {
 	axis1: number;

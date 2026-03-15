@@ -1,4 +1,4 @@
-import { lerp } from "./numbers";
+import { lerp } from "./numbers.js";
 
 export class Vec6 {
 	x: number;

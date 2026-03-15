@@ -1,9 +1,9 @@
-import { expLerpFactor, lerp } from '../math/numbers';
-import { Vec2 } from '../math/Vec2';
-import { Vec6 } from '../math/Vec6';
-import { keyMap } from './keyMap';
+import { expLerpFactor, lerp } from '../math/numbers.js';
+import { Vec2 } from '../math/Vec2.js';
+import { Vec6 } from '../math/Vec6.js';
+import { keyMap } from './keyMap.js';
 import { snapToCardinalDirection, type Mandelbrot6DState, type MandelbrotBehavior } from './MandelbrotState.svelte';
-import { PlaneMapping } from './PlaneMapping';
+import { PlaneMapping } from './PlaneMapping.js';
 
 export interface CameraControllerOptions {
 	horizontalAxis: Vec6;

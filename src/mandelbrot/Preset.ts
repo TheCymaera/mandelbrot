@@ -1,6 +1,6 @@
-import { Mat6 } from "../math/Mat6";
-import { lerp } from "../math/numbers";
-import { Vec6 } from "../math/Vec6";
+import { Mat6 } from "../math/Mat6.js";
+import { lerp } from "../math/numbers.js";
+import { Vec6 } from "../math/Vec6.js";
 import { Mandelbrot6DState } from "./MandelbrotState.svelte";
 import { SimplifiedRotation } from "./SimplifiedRotation.svelte";
 

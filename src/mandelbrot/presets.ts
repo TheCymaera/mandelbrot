@@ -1,5 +1,5 @@
-import { Vec6 } from "../math/Vec6";
-import { Preset } from "./Preset";
+import { Vec6 } from "../math/Vec6.js";
+import { Preset } from "./Preset.js";
 import { SimplifiedRotation } from "./SimplifiedRotation.svelte";
 
 

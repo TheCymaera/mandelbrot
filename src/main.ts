@@ -2,10 +2,10 @@ import MyApp from "./app-ui/MyApp.svelte";
 
 import "./main.css";
 import { mount } from "svelte";
-import { Vec6 } from "./math/Vec6";
-import { Mat6 } from "./math/Mat6";
-import { Vec3 } from "./math/Vec3";
-import { Vec2 } from "./math/Vec2";
+import { Vec6 } from "./math/Vec6.js";
+import { Mat6 } from "./math/Mat6.js";
+import { Vec3 } from "./math/Vec3.js";
+import { Vec2 } from "./math/Vec2.js";
 
 // mount app
 const element = document.querySelector(".SvelteOutlet")!;

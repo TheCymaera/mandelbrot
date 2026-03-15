@@ -1,6 +1,6 @@
-import { easeInOutBezier } from "../math/easing";
+import { easeInOutBezier } from "../math/easing.js";
 import type { Mandelbrot6DState, MandelbrotBehavior } from "./MandelbrotState.svelte";
-import { Preset } from "./Preset";
+import { Preset } from "./Preset.js";
 
 export class MandelbrotLerp implements MandelbrotBehavior {
 	start: Preset;

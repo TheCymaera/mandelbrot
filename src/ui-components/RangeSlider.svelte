@@ -1,6 +1,6 @@
 
 <script lang="ts">
-	import { generateElementId } from "./ui-component-utilities";
+	import { generateElementId } from "./ui-component-utilities.js";
 
 	let {
 		value = $bindable(),

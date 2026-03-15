@@ -1,4 +1,4 @@
-import { Vec2 } from "../math/Vec2";
+import { Vec2 } from "../math/Vec2.js";
 
 export interface PinchGestureEvent {
 	previous: [Vec2, Vec2],

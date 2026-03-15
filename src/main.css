@@ -1,7 +1,8 @@
-@import 'tailwindcss';
-@config '../tailwind.config.js';
+@import "tailwindcss";
+@config "../tailwind.config.js";
+@import "fontawesome-svgs/default.css";
 
-@theme static {
+@theme {
 	--font-sans: Arial, sans-serif; /* 'Noto Sans TC' */
 	--font-mono: 'Courier New', Courier, monospace;
 	--font-main: var(--font-sans);
