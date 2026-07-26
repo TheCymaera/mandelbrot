@@ -1,4 +1,4 @@
-import MyApp from "./app-ui/MyApp.svelte";
+import MyApp from "./app-ui/Router.svelte";
 
 import "./main.css";
 import { mount } from "svelte";
@@ -11,7 +11,7 @@ import { Vec2 } from "./math/Vec2.js";
 document.documentElement.addEventListener("touchstart",()=>undefined);
 
 // mount app
-const element = document.querySelector(".SvelteOutlet")!;
+const element = document.querySelector(".svelte-outlet")!;
 mount(MyApp, { target: element });
 
 Object.assign(globalThis, { Vec6, Mat6, Vec3, Vec2 })

@@ -1,8 +1,6 @@
 <script lang="ts" module>
 	import { fa5_solid_times } from 'fontawesome-svgs';
-	import Button from '../ui-components/Button.svelte';
 	import { githubRepositoryLink, homeLink, minecraftYouTubeCode } from './links.js';
-	import IconButton from '../ui-components/IconButton.svelte';
 
 	function syntaxHighlight(colors: readonly (readonly [RegExp, string])[], snippet: string): string {
 		let coloredSnippet = snippet;
@@ -91,13 +89,13 @@ let rotationMatrix = Mat6.rotationFromAxisIndices(Vec6.X_INDEX, Vec6.Z_INDEX, PI
 	<h1 class="text-2xl text-onSurface font-bold mb-4 pr-7">6D Mandelbrot Set Explorer</h1>
 
 
-	<IconButton 
-		className="absolute! top-6 right-6 text-xl"
-		label="Close"
-		onPress={() => window.location.hash = ""}
+	<a 
+		class="helion-icon-button absolute! top-6 right-6 text-xl"
+		title="Close"
+		href="#/"
 	>
 		{@html fa5_solid_times}
-	</IconButton>
+	</a>
 
 
 	<div class="mb-4">
@@ -124,7 +122,7 @@ let rotationMatrix = Mat6.rotationFromAxisIndices(Vec6.X_INDEX, Vec6.Z_INDEX, PI
 	
 	<div class="mb-4">
 		A Mandelbrot iteration is defined as:
-		<div class="p-3 block font-mono bg-surfaceContainer text-onSurfaceContainer/75 my-2">
+		<div class="p-3 block font-mono bg-codeContainer text-onCodeContainer/75 my-2">
 			zₙ₊₁ = zₙ ^ 2 + c
 		</div>
 	</div>
@@ -139,7 +137,7 @@ let rotationMatrix = Mat6.rotationFromAxisIndices(Vec6.X_INDEX, Vec6.Z_INDEX, PI
 			target="_blank" 
 			class="text-primary-500 hover:underline"
 		>2swap</a> generalizes the Julibrot to 6-dimensions by making the exponent a complex variable e, creating what he coined the "X Set".
-		<div class="p-3 block font-mono bg-surfaceContainer text-onSurfaceContainer/75 my-2">
+		<div class="p-3 block font-mono bg-codeContainer text-onCodeContainer/75 my-2">
 			zₙ₊₁ = zₙ ^ e + c
 		</div>
 	</div>
@@ -147,13 +145,13 @@ let rotationMatrix = Mat6.rotationFromAxisIndices(Vec6.X_INDEX, Vec6.Z_INDEX, PI
 	<h2 class="text-xl text-onSurface font-bold mb-2">Navigation</h2>
 	<div class="mb-4">
 		Using 6-dimensional vectors, we can slice a 2D viewport through this 6D space. Each pixel in the viewport corresponds to a point p with six coordinates <small class="opacity-80">(x, y, z, w, v, u)</small>, which we can map to the three complex values used in the iteration:
-		<div class="p-3 font-mono bg-surfaceContainer text-onSurfaceContainer/75 my-2 overflow-auto whitespace-nowrap">
+		<div class="p-3 font-mono bg-codeContainer text-onCodeContainer/75 my-2 overflow-auto whitespace-nowrap">
 			z = p.z + p.w * i <span class="opacity-30">// Julia</span><br>
 			c = p.x + p.y * i <span class="opacity-30">// Mandelbrot</span><br>
 			e = p.v + p.u * i <span class="opacity-30">// X</span>
 		</div>
 
-		<div class="p-3 font-mono bg-surfaceContainer text-onSurfaceContainer/75 my-2">
+		<div class="p-3 font-mono bg-codeContainer text-onCodeContainer/75 my-2">
 			z = z ^ e + c
 		</div>
 	</div>
@@ -182,7 +180,7 @@ let rotationMatrix = Mat6.rotationFromAxisIndices(Vec6.X_INDEX, Vec6.Z_INDEX, PI
 	<div class="mb-6">
 		<!--<details class="mb-2 pointer-cursor">-->
 			<div>An easy way to rotate 6D vectors is to use a 6x6 rotation matrix:</div>
-			<div class="p-3 font-mono bg-surfaceContainer text-onSurfaceContainer my-2 overflow-auto whitespace-pre">{@html codeSnippet}</div>
+			<div class="p-3 font-mono bg-codeContainer text-onCodeContainer my-2 overflow-auto whitespace-pre">{@html codeSnippet}</div>
 		<!--</details>-->
 	</div>
 
@@ -226,12 +224,12 @@ let rotationMatrix = Mat6.rotationFromAxisIndices(Vec6.X_INDEX, Vec6.Z_INDEX, PI
 	</div>
 	
 	<div class="mt-6 text-right">
-		<Button 
-			variant="filled" 
-			onPress={() => window.location.hash = ""}
+		<a 
+			class="helion-filled-button" 
+			href="#/"
 		>
 			Close
-		</Button>
+		</a>
 	</div>
 </div>
 

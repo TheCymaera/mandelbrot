@@ -2,24 +2,21 @@
 	import { onMount } from 'svelte';
 	import { MandelbrotRenderer } from '../mandelbrot/MandelbrotRenderer.js';
 	import { IndicatorSetting, Mandelbrot6DState } from '../mandelbrot/MandelbrotState.svelte.js';
-	import NumberField from '../ui-components/NumberField.svelte';
-	import Button from '../ui-components/Button.svelte';
-	import CircleButton from '../ui-components/CircleButton.svelte';
+	import NumberField from '../helion/NumberField.svelte';
 	import { fa5_brands_github, fa5_solid_bars, fa5_solid_book, fa5_solid_code, fa5_solid_info, fa5_solid_paintBrush, fa5_solid_play, fa5_solid_times, fa6_solid_upDownLeftRight } from 'fontawesome-svgs';
 	import { Vec6 } from '../math/Vec6.js';
 	import { Mat6 } from '../math/Mat6.js';
 	import { deepEquals } from '../utilities/deepEquals.js';
-	import SelectField from '../ui-components/SelectField.svelte';
-	import CheckboxField from '../ui-components/CheckboxField.svelte';
+	import SelectField from '../helion/SelectField.svelte';
+	import CheckboxField from '../helion/CheckboxField.svelte';
 	import { githubRepositoryLink } from './links.js';
-	import NavRailButton from '../ui-components/NavRailButton.svelte';
-	import NavRail from '../ui-components/NavRail.svelte';
+	import NavRail from '../helion/NavRail.svelte';
 	import { basicPresets, hyperbolicJuliaPresets, juliaPresets, mandelbrotPresets, reducedBailoutRadiusPresets, specialPresets, type PresetInfo } from '../mandelbrot/presets.js';
 	import { MandelbrotLerp } from '../mandelbrot/MandelbrotLerp.js';
 	import { linear } from 'svelte/easing';
 	import { easeInOutBezier } from '../math/easing.js';
-	import NavRailSpacer from '../ui-components/NavRailSpacer.svelte';
-	import RangeSlider from '../ui-components/RangeSlider.svelte';
+	import NavRailSpacer from '../helion/NavRailSpacer.svelte';
+	import RangeSlider from '../helion/RangeSlider.svelte';
 	import { Preset } from '../mandelbrot/Preset.js';
 	import { CameraController, CameraControllerOptions } from '../mandelbrot/CameraController.svelte.js';
 	import { keyMap } from '../mandelbrot/keyMap.js';
@@ -264,12 +261,13 @@
 			hover:opacity-100 transition-opacity delay-50 duration-500
 			{deviceSupportsHover.current ? "opacity-0" : ""}
 		">
-			<CircleButton 
-				onPress={()=>(sidebarOpen = !sidebarOpen)}
-				label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
+			<button 
+				onclick={()=>(sidebarOpen = !sidebarOpen)}
+				class="helion-floating-action-button"
+				title={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
 			>
 				{@html sidebarOpen ? fa5_solid_times : fa5_solid_bars}
-			</CircleButton>
+			</button>
 		</div>
 		<canvas 
 			bind:this={canvas}
@@ -298,63 +296,69 @@
 		}}
 	>
 		<NavRail placement="left">
-			<NavRailButton
-				selected={sidebarSection === "controls"}
-				onPress={() => sidebarSection = "controls"}
-				label="Position"
-				displayLabel={true}
+			<button
+				class="helion-nav-rail-button"
+				aria-current={sidebarSection === 'controls'}
+				onclick={() => (sidebarSection = 'controls')}
 			>
 				{@html fa6_solid_upDownLeftRight}
-			</NavRailButton>
+				<span class="text-xs">Position</span>
+			</button>
 
-			<NavRailButton
-				selected={sidebarSection === "rendering"}
-				onPress={() => sidebarSection = "rendering"}
-				label="Display"
-				displayLabel={true}
+			<button
+				class="helion-nav-rail-button"
+				aria-current={sidebarSection === 'rendering'}
+				onclick={() => (sidebarSection = 'rendering')}
 			>
 				{@html fa5_solid_paintBrush}
-			</NavRailButton>
+				<span class="text-xs">Display</span>
+			</button>
 
-			<NavRailButton
-				selected={sidebarSection === "preset"}
-				onPress={() => sidebarSection = "preset"}
-				label="Presets"
-				displayLabel={true}
+			<button
+				class="helion-nav-rail-button"
+				aria-current={sidebarSection === 'preset'}
+				onclick={() => (sidebarSection = 'preset')}
 			>
 				{@html fa5_solid_book}
-			</NavRailButton>
+				<span class="text-xs">Presets</span>
+			</button>
 
-			<NavRailButton
-				label="Animation"
-				className={showExperimentalFeatures ? "" : "hidden"}
-				selected={sidebarSection === "animation"}
-				onPress={() => sidebarSection = "animation"}
+			<button
+				class="helion-nav-rail-button"
+				hidden={!showExperimentalFeatures}
+				aria-current={sidebarSection === 'animation'}
+				onclick={() => (sidebarSection = 'animation')}
 			>
 				{@html fa5_solid_play}
-			</NavRailButton>
+				<span class="text-xs">Animation</span>
+			</button>
 
-			<NavRailButton
-				selected={sidebarSection === "json"}
-				onPress={() => sidebarSection = "json"}
-				label="JSON"
-				displayLabel={true}
+			<button
+				class="helion-nav-rail-button"
+				aria-current={sidebarSection === 'json'}
+				onclick={() => (sidebarSection = 'json')}
 			>
 				{@html fa5_solid_code}
-			</NavRailButton>
+				<span class="text-xs">JSON</span>
+			</button>
 
 			<NavRailSpacer />
 
-			<NavRailButton
-				label="Info"
-				onPress={()=>location.hash = "#info"}
+			<a
+				class="helion-nav-rail-button"
+				href="#info"
 			>
 				{@html fa5_solid_info}
-			</NavRailButton>
-			<a tabindex="-1" href="{githubRepositoryLink}" target="_blank">
-				<NavRailButton label="GitHub" onPress={()=>{}}>
-					{@html fa5_brands_github}
-				</NavRailButton>
+				<span class="text-xs">Info</span>
+			</a>
+
+			<a
+				class="helion-nav-rail-button"
+				href={githubRepositoryLink}
+				target="_blank"
+			>
+				{@html fa5_brands_github}
+				<span class="text-xs">GitHub</span>
 			</a>
 		</NavRail>
 		<div class="p-4 overflow-y-auto">
@@ -380,19 +384,21 @@
 				{ name: 'Julia', mode: CameraControllerOptions.JULIA },
 				{ name: 'X', mode: CameraControllerOptions.X },
 			] as { name, mode } }
-				<Button 
-					onPress={() => mandelbrot.cameraController.options = mode()}
-					className="w-full p-2! rounded! transition-[background-color,color,outline-offset]!"
-					variant={deepEquals(mandelbrot.cameraController.options, mode()) ? 'filled' : 'outlined'}
+				<button
+					onclick={() => mandelbrot.cameraController.options = mode()}
+					class="
+						w-full p-2! rounded!
+						{deepEquals(mandelbrot.cameraController.options, mode()) ? 'helion-filled-button' : 'helion-outlined-button'}
+					"
 				>
 					{name}
-				</Button>
+				</button>
 			{/each}
 		</div>
 
 		{#snippet kbd(text: string)}
 			<kbd class="
-				bg-surfaceContainer text-onSurfaceContainer rounded px-3 ml-1 font-mono
+				bg-codeContainer text-onCodeContainer rounded px-3 ml-1 font-mono
 			">{text}</kbd>
 		{/snippet}
 
@@ -434,13 +440,13 @@
 			</div>
 		</div>
 
-		<div class="text-sm mb-3 font-mono bg-surfaceContainer p-2 rounded">
+		<div class="text-sm mb-3 font-mono bg-codeContainer p-2 rounded">
 			z = p.z + p.w * i <span class="opacity-30">// Julia</span><br>
 			c = p.x + p.y * i <span class="opacity-30">// Mandelbrot</span><br>
 			e = p.v + p.u * i <span class="opacity-30">// X</span>
 		</div>
 
-		<div class="text-sm mb-3 font-mono bg-surfaceContainer p-2 rounded">
+		<div class="text-sm mb-3 font-mono bg-codeContainer p-2 rounded">
 			z = z ^ e + c
 		</div>
 
@@ -550,26 +556,26 @@
 					label="Rotate By"
 					bind:value={rotateBy}
 				/>
-				<Button
-					className="w-20 p-2! rounded!"
+				<button
+					class="helion-filled-button w-20 p-2! rounded!"
 					disabled={mandelbrot.cameraController.options.rotationPlaneMappings.length === 0}
-					onPress={() => {
+					onclick={() => {
 						const inRadians = rotateBy * (Math.PI / 180);
 						mandelbrot.rotateByPlaneMappings(mandelbrot.cameraController.options.rotationPlaneMappings, inRadians, mandelbrot.cameraController.rotateOnLocalPlanes);
 					}}
 				>
 					Rotate
-				</Button>
+				</button>
 			</div>
 			
-			<Button
-				className="px-5! p-2! rounded! mt-2"
-				onPress={() => {
+			<button
+				class="helion-filled-button px-5! p-2! rounded! mt-2"
+				onclick={() => {
 					mandelbrot.orientationMatrix = Mat6.identity();
 				}}
 			>
 				Reset Rotation
-			</Button>
+			</button>
 			<br>
 		{:else}
 			{@const degToRad = (n: number) => n * (Math.PI / 180)}
@@ -721,12 +727,7 @@
 				loadJsonDump(this.value as string);
 			}}
 			placeholder="Paste JSON parameters here..."
-			class="
-				w-full p-3 font-mono whitespace-pre resize-none
-				border-[.08rem] border-containerBorder rounded-md bg-transparent
-				outline-offset-[calc(var(--outline-width)*-1)]
-				transition-colors
-			"
+			class="w-full p-3 font-mono whitespace-pre resize-none helion-box-field"
 			rows={jsonString.split('\n').length + 1}
 		></textarea>
 
@@ -791,10 +792,9 @@
 		{@const isApplied = preset.preset.isApplied(mandelbrot) ||
 			mandelbrot.behaviors.find(b => b instanceof MandelbrotLerp)?.end === preset.preset
 		}
-		<Button
-			className="w-full p-2! rounded! mb-2"
-			variant={isApplied ? 'filled' : 'outlined'}
-			onPress={() => {
+		<button
+			class="w-full p-2! rounded! mb-2 {isApplied ? 'helion-filled-button' : 'helion-outlined-button'}"
+			onclick={() => {
 				mandelbrot.behaviors = mandelbrot.behaviors.filter(b => !(b instanceof MandelbrotLerp));
 				mandelbrot.behaviors.push(new MandelbrotLerp({
 					start: Preset.fromState(mandelbrot),
@@ -806,7 +806,7 @@
 			}}
 		>
 			{preset.name}
-		</Button>
+		</button>
 	{/snippet}
 
 	<div class="grid grid-cols-3 gap-2 mb-6">
